@@ -1,0 +1,9 @@
+[2021-10-28 15:49:48,189][ INFO][/home/nvidia/publisher/src/main.cpp:70  ] control bind address : @/tmp/_dev_video6.sock
+[2021-10-28 15:49:48,189][ INFO][/home/nvidia/publisher/src/main.cpp:71  ] !!!program start!!!
+[2021-10-28 15:49:48,189][ INFO][/home/nvidia/publisher/src/RemoteService.cpp:19  ] adjust bitrate is running, address @/tmp/_dev_video6.sock
+[2021-10-28 15:49:48,189][ INFO][/home/nvidia/publisher/src/UnixDomainService.cpp:67  ] Open, unix domain server open
+[2021-10-28 15:52:14,385][ INFO][/home/nvidia/publisher/src/UnixDomainService.cpp:140 ] Close, unix domain server close
+[2021-10-28 15:52:14,385][ INFO][/home/nvidia/publisher/src/UnixDomainService.cpp:83  ] unix domain socket read data 0
+[2021-10-28 15:52:14,385][ INFO][/home/nvidia/publisher/src/UnixDomainService.cpp:85  ] read data error: 0
+[2021-10-28 15:52:14,385][ INFO][/home/nvidia/publisher/src/UnixDomainService.cpp:140 ] Close, unix domain server close
+[2021-10-28 15:52:14,385][ INFO][/home/nvidia/publisher/src/RemoteService.cpp:29  ] adjust bitrate is stopped
