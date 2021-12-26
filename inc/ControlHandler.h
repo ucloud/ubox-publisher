@@ -10,7 +10,7 @@ public:
     ~ControlHandler();
 
     int StartStream(const char* deviceName, int srcWidth, int srcHeight,
-                    int dstWidth, int dstHeight, int fps, int bitrate,
+                    int dstWidth, int dstHeight, int fps, int bitrate, int keyint, double coeff,
                     const char* rtmpURL);
     int StopStream(const char* deviceName);
     int SetBitrate(const char* deviceName, int bitrate);

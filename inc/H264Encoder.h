@@ -11,12 +11,13 @@ extern "C" {
 
 class H264Encoder {
 public:
-    H264Encoder(int width, int height, int fps = 20, int bitrate = 256);
+    H264Encoder(int width, int height, int fps = 20, int bitrate = 256, int keyint = 10, double coeff = 1.5);
     ~H264Encoder();
     std::pair<int, char*> getMetadata();
     std::pair<int, char*> encode(char* frame, int picID);
     void ResetConstant(float con);
     void SetConstant(float con);
+     void SetBitrate(int bitrate);
 private:
     int mLumaSize;
     int mChromaSize;

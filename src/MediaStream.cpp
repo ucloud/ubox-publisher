@@ -17,7 +17,7 @@ MediaStream::~MediaStream() {
 }
 
 int MediaStream::Open(const char *deviceName, int srcWidth, int srcHeight, int dstWidth,
-                      int dstHeight, int fps, int bitrate,
+                      int dstHeight, int fps, int bitrate, int keyint, double coeff,
                       PacketQueue *queue, MemoryPool *pool) {
     std::unique_lock<std::mutex> lock(threadMutex);
     if (opened) {
@@ -37,6 +37,8 @@ int MediaStream::Open(const char *deviceName, int srcWidth, int srcHeight, int d
     this->dstHeight = dstHeight;
     this->fps = fps;
     this->bitrate = bitrate;
+    this->keyint = keyint;
+    this->coeff = coeff;
 
     picID = 0;
     quit = false;
@@ -81,7 +83,7 @@ void MediaStream::run() {
 
     // prepare
     statis.Init(fps);
-    H264Encoder encoder(dstWidth, dstHeight, fps, bitrate);
+    H264Encoder encoder(dstWidth, dstHeight, fps, bitrate, keyint, coeff);
     H264RTMPPackager packager;
     RTMPPacket metaPkt;
     char metaBuf[256];
@@ -105,7 +107,7 @@ void MediaStream::run() {
         picID++;
         auto frame_start = std::chrono::system_clock::now();
         char* srcFrame = source.getNextFrame();
-        //auto frame_end = std::chrono::system_clock::now();
+        auto frame_end = std::chrono::system_clock::now();
         if (srcFrame == NULL) {
             tlog(TLOG_INFO, "no frame\n");
             usleep(1000);
@@ -113,12 +115,12 @@ void MediaStream::run() {
         }
         char* frame = (char*)imgProc.YUY2I420((unsigned char*)srcFrame, srcWidth, srcHeight, dstWidth, dstHeight);
         result = encoder.encode(frame, picID);
-        //auto encode_end = std::chrono::system_clock::now();
-        //tlog(TLOG_INFO, "frame id: %d, get start time %ld, get end time %ld, encode end time %ld\n", picID,
-        tlog(TLOG_INFO, "frame id: %d, get start time %ld\n", picID,
-                std::chrono::duration_cast<std::chrono::milliseconds>(frame_start.time_since_epoch()).count());
-                //std::chrono::duration_cast<std::chrono::milliseconds>(frame_end.time_since_epoch()).count(),
-                //std::chrono::duration_cast<std::chrono::milliseconds>(encode_end.time_since_epoch()).count());
+        auto encode_end = std::chrono::system_clock::now();
+        tlog(TLOG_INFO, "frame id: %d, get start time %ld, get end time %ld, encode end time %ld\n", picID,
+        //tlog(TLOG_INFO, "frame id: %d, get start time %ld\n", picID,
+                std::chrono::duration_cast<std::chrono::milliseconds>(frame_start.time_since_epoch()).count(),
+                std::chrono::duration_cast<std::chrono::milliseconds>(frame_end.time_since_epoch()).count(),
+                std::chrono::duration_cast<std::chrono::milliseconds>(encode_end.time_since_epoch()).count());
         statis.PushDataSize(result.first);
 
         keyFrame = H264RTMPPackager::isKeyFrame(result.second);
@@ -140,22 +142,27 @@ void MediaStream::run() {
             continue;
         }
 
-        //if(adust_duration > adjust_interval && changeCon) {
-        if(adust_duration > adjust_interval) {
-            float constant = statis.GetConstant(bitrate);
-            if (constant > 10) {
-                encoder.SetConstant(constant);
-		//changeCon = false;
-            }
-            adust_duration = 0;
-        }
+	//if(adust_duration > adjust_interval && changeCon) {
+	//        if(adust_duration > adjust_interval) {
+	//            float constant = statis.GetConstant(bitrate);
+	//            if (constant > 10) {
+	//                encoder.SetConstant(constant);
+	//        //changeCon = false;
+	//            }
+	//            adust_duration = 0;
+	//        }
+	
+	if(changeCon) {
+	    encoder.SetBitrate(bitrate);
+	    changeCon = false;
+	}
 
         cur = std::chrono::system_clock::now();
         frame_duration = std::chrono::duration_cast<std::chrono::microseconds>(cur - last).count();
         adust_duration += frame_duration;
 
         if (frame_duration < frame_interval) {
-            tlog(TLOG_INFO, ".....sleep....\n");
+            tlog(TLOG_INFO, ".....sleep....frame_duration(%d),frame_interval(%d),cur(%ld)\n",frame_duration, frame_interval, std::chrono::duration_cast<std::chrono::milliseconds>(cur.time_since_epoch()).count());
             usleep(frame_interval - frame_duration);
         }
 

@@ -14,7 +14,7 @@ public:
     ~MediaStream();
 
     int Open(const char* deviceName, int srcWidth, int srcHeight,
-             int dstWidth, int dstHeight, int fps, int bitrate,
+             int dstWidth, int dstHeight, int fps, int bitrate, int keyint, double coeff,
              PacketQueue *queue, MemoryPool *pool);
     int Close();
 
@@ -47,6 +47,8 @@ private:
     int dstHeight;
     int fps;
     int bitrate;
+    int keyint;
+    double coeff;
     int picID;
 };
 

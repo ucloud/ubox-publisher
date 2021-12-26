@@ -184,6 +184,8 @@ cJSON* UnixDomainService::PushStream_Parse(cJSON * jsonRequest) {
     cJSON* jsonURL = cJSON_GetObjectItem(jsonRequest, "URL");
     cJSON* jsonFPS = cJSON_GetObjectItem(jsonRequest, "FPS");
     cJSON* jsonBitrate = cJSON_GetObjectItem(jsonRequest, "Bitrate");
+    cJSON* jsonKeyint = cJSON_GetObjectItem(jsonRequest, "Keyint");
+    cJSON* jsonCoeff = cJSON_GetObjectItem(jsonRequest, "Coeff");
 
     int srcWidth = 1280;
     int srcHeight = 720;
@@ -191,6 +193,8 @@ cJSON* UnixDomainService::PushStream_Parse(cJSON * jsonRequest) {
     int dstHeight = 480;
     int fps = 30;
     int bitrate = 1000;
+    int keyint = 10;
+    double coeff = 1.5;
 
     if (!cJSON_IsString(jsonDevice)) {
         tlog(TLOG_INFO,  "wrong data, data no device\n");
@@ -224,13 +228,25 @@ cJSON* UnixDomainService::PushStream_Parse(cJSON * jsonRequest) {
         if (jsonBitrate->valueint > 0)
             bitrate = jsonBitrate->valueint;
     }
+    if (cJSON_IsNumber(jsonBitrate)) {
+        if (jsonBitrate->valueint > 0)
+            bitrate = jsonBitrate->valueint;
+    }
+    if (cJSON_IsNumber(jsonKeyint)) {
+        if (jsonKeyint->valueint > 0)
+            keyint = jsonKeyint->valueint;
+    }
+    if (cJSON_IsNumber(jsonCoeff)) {
+        if (jsonCoeff->valuedouble > 0)
+            coeff = jsonCoeff->valuedouble;
+    }
 
     int ret = handler.StartStream((const char*)jsonDevice->valuestring,
-                        srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate,
+                        srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate, keyint, coeff,
                         (const char*)jsonURL->valuestring);
     if (ret != 0) {
-        tlog(TLOG_INFO,  "start stream failed, device(%s), srcWidth(%d), srcHeight(%d), dstWidth(%d), dstHeight(%d), fps(%d), bitrate(%d), URL(%s)\n",
-             jsonDevice->valuestring, srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate, jsonURL->valuestring);
+        tlog(TLOG_INFO,  "start stream failed, device(%s), srcWidth(%d), srcHeight(%d), dstWidth(%d), dstHeight(%d), fps(%d), bitrate(%d), keyint(%d), coeff(%d), URL(%s)\n",
+             jsonDevice->valuestring, srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate, keyint, coeff, jsonURL->valuestring);
         return GetJsonByCode(RETCODE_TYPE_DEVICE_NOTOPEN, "device not open");
     }
     return GetJsonByCode(RETCODE_TYPE_SUCCESS, "success");

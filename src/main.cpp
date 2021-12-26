@@ -27,14 +27,18 @@ int main(int argc, char *argv[]) {
     std::string deviceName = "";
     int width = 1280;
     int height = 720;
+    int dWidth = 640;
+    int dHeight = 480;
     int fps = 30;
     int bitrate = 2000;
+    int keyint = 10;
+    int coeff = 1;
     signed char ch;
 
     if (argc < 2) {
         showUsage();
     }
-    while ((ch = getopt(argc, argv, "u:t:d:a:w:h:f:b:")) != -1) {
+    while ((ch = getopt(argc, argv, "u:t:d:a:w:h:f:b:k:c:x:y:")) != -1) {
         switch (ch) {
             case 'u':
                 sock_path = optarg;
@@ -54,11 +58,23 @@ int main(int argc, char *argv[]) {
             case 'h':
                  height = atoi(optarg);
                 break;
+            case 'x':
+                 dWidth = atoi(optarg);
+                break;
+            case 'y':
+                 dHeight = atoi(optarg);
+                break;
             case 'f':
                  fps = atoi(optarg);
                 break;
             case 'b':
                  bitrate = atoi(optarg);
+                break;
+            case 'k':
+                 keyint = atoi(optarg);
+                break;
+            case 'c':
+                 coeff = atoi(optarg);
                 break;
             default:
                 std::cout << "unknown option " << ch << std::endl;
@@ -85,7 +101,7 @@ int main(int argc, char *argv[]) {
     // for test
     if (deviceName != "" && url != "") {
         tlog(TLOG_INFO, "for test : (device) %s, (url) %s\n", deviceName.c_str(), url.c_str());
-    	handler.StartStream(deviceName.c_str(), width, height, 640, 480, fps, bitrate, url.c_str());
+    	handler.StartStream(deviceName.c_str(), width, height, dWidth, dHeight, fps, bitrate, keyint, coeff, url.c_str());
     }
 
     while(true) {

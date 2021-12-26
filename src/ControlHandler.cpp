@@ -14,7 +14,7 @@ ControlHandler::~ControlHandler() {
 }
 
 int ControlHandler::StartStream(const char* deviceName, int srcWidth, int srcHeight,
-                int dstWidth, int dstHeight, int fps, int bitrate,
+                int dstWidth, int dstHeight, int fps, int bitrate, int keyint, double coeff,
                 const char* rtmpURL) {
     std::unique_lock<std::mutex> lock(streamMutex);
     if (streamOpened) {
@@ -36,7 +36,7 @@ int ControlHandler::StartStream(const char* deviceName, int srcWidth, int srcHei
         publisher = new RTMPPublisher();
     }
 
-    int ret = stream->Open(deviceName, srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate, &queue, &pool);
+    int ret = stream->Open(deviceName, srcWidth, srcHeight, dstWidth, dstHeight, fps, bitrate, keyint, coeff, &queue, &pool);
     if (ret != 0) {
         tlog(TLOG_INFO, "stream open failed\n");
         streamOpened = false;
