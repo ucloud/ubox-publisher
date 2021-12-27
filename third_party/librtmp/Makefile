@@ -23,14 +23,14 @@ DEF_OPENSSL=-DUSE_OPENSSL
 DEF_GNUTLS=-DUSE_GNUTLS
 DEF_=-DNO_CRYPTO
 REQ_GNUTLS=gnutls,hogweed,nettle
-REQ_OPENSSL=libssl,libcrypto
+REQ_OPENSSL=libssl,libcrypto1
 PUB_GNUTLS=-lgmp
 LIBZ=-lz
 LIBS_posix=
 LIBS_darwin=
 LIBS_mingw=-lws2_32 -lwinmm -lgdi32
 LIB_GNUTLS=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
-LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+LIB_OPENSSL= -lssl -lcrypto $(LIBZ)
 LIB_POLARSSL=-lpolarssl $(LIBZ)
 PRIVATE_LIBS=$(LIBS_$(SYS))
 CRYPTO_LIB=$(LIB_$(CRYPTO)) $(PRIVATE_LIBS)
@@ -72,9 +72,11 @@ SO_DEF=$(SODEF_$(SHARED))
 SO_LIB=$(SOLIB_$(SHARED))
 SO_INST=$(SOINST_$(SHARED))
 
+INC=-I../openssl-1.0.2h/include
+XLDFLAGS=-L../openssl-1.0.2h/
 DEF=-DRTMPDUMP_VERSION=\"$(VERSION)\" $(CRYPTO_DEF) $(XDEF)
 OPT=-O2
-CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(OPT) $(SO_DEF)
+CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(OPT) $(SO_DEF) 
 LDFLAGS=$(XLDFLAGS)
 
 
@@ -85,10 +87,10 @@ all:	librtmp.a $(SO_LIB)
 clean:
 	rm -f *.o *.a *.$(SOX) *$(SO_EXT) librtmp.pc
 
-librtmp.a: $(OBJS)
-	$(AR) rs $@ $?
+librtmp.a: $(OBJS) 
+	$(AR) cru $@ $? 
 
-librtmp$(SO_EXT): $(OBJS)
+librtmp$(SO_EXT): $(OBJS) 
 	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
 	ln -sf $@ librtmp.$(SOX)
 
