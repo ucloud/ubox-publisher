@@ -6,11 +6,12 @@
 H264Encoder::H264Encoder(int width, int height, int fps, int bitrate, int keyint, double coeff){
     mLumaSize = width * height;
     mChromaSize = mLumaSize / 4;
-    mConn = 31;
+    mConn = 24;
+    this->coeff = coeff;
 
     x264_param = new x264_param_t;
     x264_param_default_preset(x264_param, "ultrafast", "zerolatency");
-    x264_param_apply_profile(x264_param, "baseline");
+    x264_param_apply_profile(x264_param, "high");
     x264_param->i_log_level = X264_LOG_ERROR;
     x264_param->i_csp = X264_CSP_I420;
     x264_param->i_width = width;
@@ -20,14 +21,19 @@ H264Encoder::H264Encoder(int width, int height, int fps, int bitrate, int keyint
     x264_param->i_keyint_max = keyint;
     x264_param->i_timebase_num = 1;
     x264_param->i_timebase_den = fps;
+    x264_param->rc.i_lookahead=0;
     x264_param->rc.i_rc_method = X264_RC_ABR;
     x264_param->rc.i_bitrate = bitrate;
     x264_param->rc.i_vbv_max_bitrate = coeff*bitrate;
-    x264_param->rc.i_vbv_buffer_size = 2*bitrate;
+    x264_param->rc.i_vbv_buffer_size = 3*bitrate;
     //x264_param->rc.i_rc_method = X264_RC_CRF;
     //x264_param->rc.f_rf_constant = mConn;
+    //x264_param->i_threads = 1;
+    //x264_param->b_sliced_threads = 0;
     x264_param->b_repeat_headers = 0; // add sps and pps manually
     x264_param->b_annexb = 0; // for the convenience of packing
+    x264_param->b_deblocking_filter = 1;
+    x264_param->i_frame_reference = 6;
 
     tlog(TLOG_INFO, "encoder,fps(%d), bitrate( %d), keyint(%d), coeff(%f)\n", fps, bitrate, keyint, coeff);
 
@@ -94,10 +100,11 @@ void H264Encoder::SetConstant(float con) {
     x264_encoder_reconfig(mHandle, x264_param);
 }
 
-void H264Encoder::SetBitrate(int bitrate) {
-    tlog(TLOG_INFO, "reset bitrate,cur: %f, dst: %f\n", x264_param->rc.i_bitrate, bitrate);
+void H264Encoder::SetBitrate(int bitrate) { 
+    int cur_bitrate = x264_param->rc.i_bitrate;
     x264_param->rc.i_bitrate = bitrate;
-    x264_param->rc.i_vbv_max_bitrate = bitrate;
-    x264_param->rc.i_vbv_buffer_size = 2*bitrate;
+    x264_param->rc.i_vbv_max_bitrate = this->coeff*bitrate;
+    //x264_param->rc.i_vbv_buffer_size = 3*bitrate;
     x264_encoder_reconfig(mHandle, x264_param);
+    tlog(TLOG_INFO, "reset bitrate,cur: %d, dst: %d, max: %d, coeff: %f\n", cur_bitrate, x264_param->rc.i_bitrate, x264_param->rc.i_vbv_max_bitrate, this->coeff);
 }

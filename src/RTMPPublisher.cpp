@@ -2,7 +2,10 @@
 #include <signal.h>
 #include <iostream>
 #include <unistd.h>
+#include <sys/socket.h>
 #include "tinylog/tlog.h"
+
+#define RTMP_TIMEOUT 5
 
 RTMPPublisher::RTMPPublisher(){
     opened = false;
@@ -43,7 +46,7 @@ int RTMPPublisher::Connect(const char *url, PacketQueue *queue, MemoryPool *pool
 
     rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
-    rtmp->Link.timeout = 5;
+    rtmp->Link.timeout = RTMP_TIMEOUT;
 
     if (!connect(url)) {
         tlog(TLOG_INFO, "rtmp connect failed\n");
@@ -68,7 +71,12 @@ bool RTMPPublisher::connect(const char *url) {
     if (!RTMP_Connect(rtmp, NULL)) {
         return false;
     }
-
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    if (setsockopt(rtmp->m_sb.sb_socket, SOL_SOCKET, SO_SNDTIMEO, ( char *)&timeout, sizeof (timeout)) == -1) {
+        tlog(TLOG_INFO, "rtmp set send timeout failed\n");
+    }
 
     if (!RTMP_ConnectStream(rtmp, 0)) {
         RTMP_Close(rtmp);

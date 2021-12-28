@@ -1,5 +1,6 @@
 #include "ImageProcessor.h"
 #include <sys/time.h>
+#include "tinylog/tlog.h"
 
 ImageProcessor::ImageProcessor() {
 
@@ -14,7 +15,7 @@ const unsigned char* ImageProcessor::YUY2I420(const unsigned char *data, int src
     matYUV = cv::Mat(srcSize, CV_8UC2, (void*)data);
     cv::cvtColor(matYUV, mat, cv::COLOR_YUV2BGR_YVYU );
     resize(mat, matResize, dstWidth, dstHeight);
-    //addTime(matResize);
+    addTime(matResize);
     cv::cvtColor(matResize, matDst, cv::COLOR_BGR2YUV_YV12);
     return (const unsigned char*)matDst.data;
 }
@@ -51,5 +52,8 @@ void ImageProcessor::resize(cv::Mat &srcMat, cv::Mat &dstMat, int dstWidth, int 
         mat_tmp_resize = srcMat(rect);
     }
     cv::Size outSize(dstWidth, dstHeight);
+    auto resize_start = std::chrono::system_clock::now();
     cv::resize(mat_tmp_resize, dstMat, outSize, 0, 0, cv::INTER_AREA);
+    auto resize_stop = std::chrono::system_clock::now();
+    tlog(TLOG_INFO, "resize time: %ld", std::chrono::duration_cast<std::chrono::microseconds>(resize_stop-resize_start).count());
 }

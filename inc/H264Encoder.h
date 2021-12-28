@@ -26,6 +26,7 @@ private:
     x264_nal_t *mNal;
     x264_picture_t mPicture;
     int mConn;
+    double coeff;
 };
 
 #endif
