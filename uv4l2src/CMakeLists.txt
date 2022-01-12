@@ -21,7 +21,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -Wall")
 
 pkg_get_variable(GSTREAMER_PLUGIN_DIR gstreamer-1.0 pluginsdir)
 
-message("install ${TARGET} to ${GSTREAMER_PLUGIN_DIR}")
+message("`make install` install ${TARGET} to ${GSTREAMER_PLUGIN_DIR}")
 
 install(TARGETS ${TARGET}
     DESTINATION ${GSTREAMER_PLUGIN_DIR}

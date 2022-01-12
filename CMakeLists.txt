@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.4)
 project(publisher C CXX)
 add_subdirectory(src bin)
+if (EXISTS ${CMAKE_SOURCE_DIR}/wrhcamerasrc/CMakeLists.txt)
 add_subdirectory(wrhcamerasrc)
+endif ()
 add_subdirectory(uv4l2src)
 add_subdirectory(test)
 
