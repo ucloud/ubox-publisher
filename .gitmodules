@@ -1,0 +1,3 @@
+[submodule "wrhcamerasrc"]
+	path = wrhcamerasrc
+	url = git@git.ucloudadmin.com:sdnbox/wrhcamerasrc.git

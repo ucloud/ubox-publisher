@@ -1,0 +1,1 @@
+{ "Action":"PushStream", "Device": "rtsp://admin:123456@1.1.1.1/Streaming/Channels/101", "StreamCopy": false, "URL":"rtmp://2.2.2.2/live/1", "Accel":1, "DstWidth":640, "DstHeight":480, "Bitrate":1000, "OutFPS": 16}

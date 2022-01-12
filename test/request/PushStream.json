@@ -1,0 +1,1 @@
+{"Action":"PushStream","Device":"/dev/video0","SrcWidth":1024,"DstWidth":768,"FPS":24,StreamCopy:true,"DstWidth":640,"DstHeight":480,"URL":"rtmp://2.2.2.2/live/abc","Bitrate":1000}
