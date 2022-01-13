@@ -179,12 +179,12 @@ void MediaStream::addEncoder() {
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
     e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-    g_object_set(e, "profile", 4/*high*/, "iframeinterval", 10, "control-rate", 1, "maxperf-enable",
+    g_object_set(e, "vbv-size", 1000000, "profile", 4/*high*/, "iframeinterval", 10, "control-rate", 1, "maxperf-enable",
                  1, "bitrate", mBitrate * 1000, NULL);
   } else {
     e = gst_element_factory_make("x264enc", "encoder");
-    g_object_set(e, "tune", 4, "speed-preset", 1, "vbv-buf-capacity", 100,
-                 NULL); // lowlatency,ultrafast
+    g_object_set(e, "key-int-max", 10, "tune", 4, "speed-preset", 3, "vbv-buf-capacity", 100,
+                 NULL); // lowlatency,veryfast
     setBitrate(e, mBitrate);
   }
   mElements.push_back(e);

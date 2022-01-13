@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(publisher C CXX)
+project(ubox-publisher C CXX)
 add_subdirectory(src bin)
 if (EXISTS ${CMAKE_SOURCE_DIR}/wrhcamerasrc/CMakeLists.txt)
 add_subdirectory(wrhcamerasrc)
@@ -25,7 +25,7 @@ execute_process(
 
 set(CPACK_PACKAGE_NAME                      "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION                   "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY       "publisher")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY       "ubox-publisher")
 set(CPACK_SYSTEM_NAME                       "${ARCH}")
 set(CPACK_PACKAGE_CONTACT                   "Faicker Mo <faicker.mo@ucloud.cn>")
 
