@@ -8,7 +8,11 @@ const char *inputV4L2 = "v4l2";
 const char *accelJetson = "jetson";
 const char *accelIntel = "intel";
 
-MediaStream::MediaStream() { mOpened = false; }
+MediaStream::MediaStream() {
+  mOpened = false;
+  mEnd = false;
+  mFinish = false;
+}
 
 MediaStream::~MediaStream() {}
 
@@ -49,15 +53,17 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
 int MediaStream::Close() {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   mQuit = true;
-  gst_element_set_state(mPipeline, GST_STATE_NULL);
-  try {
-    mStreamThread.join();
-  } catch (...) {
-    tlog(TLOG_INFO, "catch stream thread error!");
-    tlog(TLOG_INFO, "stream thread quit!");
-    mOpened = false;
-    lock.unlock();
-    return 0;
+  if (!mEnd) {
+    gst_element_set_state(mPipeline, GST_STATE_NULL);
+    try {
+      mStreamThread.join();
+    } catch (...) {
+      tlog(TLOG_INFO, "catch stream thread error!");
+      tlog(TLOG_INFO, "stream thread quit!");
+      mOpened = false;
+      lock.unlock();
+      return 0;
+    }
   }
   tlog(TLOG_INFO, "stream thread quit!");
   mOpened = false;
@@ -97,11 +103,12 @@ void MediaStream::addSource() {
                  4 /*tcp*/, NULL);
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
-    g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth, "height",
-                 mSrcHeight, NULL);
+    g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
+                 "height", mSrcHeight, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
-    g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height", mSrcHeight, NULL);
+    g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
+                 mSrcHeight, NULL);
   }
   mElements.push_back(e);
 }
@@ -114,8 +121,8 @@ void MediaStream::addVideoRate() {
 void MediaStream::addFilterFramerate() {
   GstElement *e = gst_element_factory_make("capsfilter", "filter_framerate");
   GstCaps *caps;
-  caps = gst_caps_new_simple("video/x-raw", "framerate", GST_TYPE_FRACTION, mFps, 1,
-                               NULL);
+  caps = gst_caps_new_simple("video/x-raw", "framerate", GST_TYPE_FRACTION,
+                             mFps, 1, NULL);
   g_object_set(e, "caps", caps, NULL);
   gst_caps_unref(caps);
   mElements.push_back(e);
@@ -179,11 +186,13 @@ void MediaStream::addEncoder() {
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
     e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-    g_object_set(e, "vbv-size", 1000000, "profile", 4/*high*/, "iframeinterval", 10, "control-rate", 1, "maxperf-enable",
-                 1, "bitrate", mBitrate * 1000, NULL);
+    g_object_set(e, "vbv-size", 1000000, "profile", 4 /*high*/,
+                 "iframeinterval", 10, "control-rate", 1, "maxperf-enable", 1,
+                 "bitrate", mBitrate * 1000, NULL);
   } else {
     e = gst_element_factory_make("x264enc", "encoder");
-    g_object_set(e, "key-int-max", 10, "tune", 4, "speed-preset", 3, "vbv-buf-capacity", 100,
+    g_object_set(e, "key-int-max", 10, "tune", 4, "speed-preset", 3,
+                 "vbv-buf-capacity", 100,
                  NULL); // lowlatency,veryfast
     setBitrate(e, mBitrate);
   }
@@ -234,8 +243,7 @@ int MediaStream::setupPipeline() {
   addScale();
   addFilterScale();
 
-  if (mInputType == inputWrhCamera)
-    addVideoConvert();
+  addVideoConvert();
 
   addEncoder();
   if (mAccel == accelJetson)
@@ -278,37 +286,60 @@ int MediaStream::setupPipeline() {
   if (res == GST_STATE_CHANGE_FAILURE) {
     tlog(TLOG_ERROR, "play failed");
     gst_object_unref(mPipeline);
-    return -2;
+    return 1;
   }
   return 0;
 }
 
 void MediaStream::loop_run() {
+  int i = 0;
+  pthread_t h;
   while (!mQuit && mRestart) {
     tlog(TLOG_INFO, "run pipeline");
+    i = 0;
+    mFinish = mEnd = false;
     std::thread th = std::thread(&MediaStream::run, this);
-    try {
-      th.join();
-    } catch (...) {
-      tlog(TLOG_INFO, "pipeline quit");
+    h = th.native_handle();
+    th.detach();
+    while (true) {
+      if (mFinish)
+        i++;
+      if (mEnd) {
+        tlog(TLOG_INFO, "thread end");
+        break;
+      }
+      if (i > 25) {
+        // th is deadlock
+        tlog(TLOG_WARN, "deadlock detected");
+        pthread_cancel(h);
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
   }
-  tlog(TLOG_INFO, "stream thread quit");
+  tlog(TLOG_INFO, "media stream quit");
 }
 
 void MediaStream::run() {
   gst_init(NULL, NULL);
   mRestart = false;
   int result = setupPipeline();
-  if (result != 0)
-      return;
+  if (result > 0) {
+    mElements.clear();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    mRestart = true;
+    return;
+  } else if (result < 0) {
+    mElements.clear();
+    return;
+  }
 
   GstBus *bus = gst_element_get_bus(mPipeline);
   if (bus == NULL) {
     tlog(TLOG_WARN, "get bus failed");
     gst_element_set_state(mPipeline, GST_STATE_NULL);
     gst_object_unref(mPipeline);
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     mRestart = true;
     mElements.clear();
     return;
@@ -358,11 +389,14 @@ void MediaStream::run() {
     gst_message_unref(msg);
   } while (!mRestart && !mQuit);
 
+  mFinish = true;
   gst_object_unref(bus);
+  mElements.clear();
+  gst_element_set_state(mPipeline, GST_STATE_PAUSED);
   gst_element_set_state(mPipeline, GST_STATE_NULL);
   gst_object_unref(mPipeline);
-  mElements.clear();
-  tlog(TLOG_INFO, "thread end and quit normally");
+  tlog(TLOG_INFO, "run end and quit normally");
+  mEnd = true;
 }
 
 void MediaStream::onRtspPadAdded(GstElement *src, GstPad *srcPad,

@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <thread>
+#include <chrono>
 #include <mutex>
 #include <vector>
 extern "C" {
@@ -46,6 +47,8 @@ private:
     bool mQuit;
     bool mOpened;
     bool mRestart;
+    bool mEnd;
+    bool mFinish;
     std::thread mStreamThread;
     std::mutex mThreadMutex;
 
