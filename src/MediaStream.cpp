@@ -109,6 +109,9 @@ void MediaStream::addSource() {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
                  mSrcHeight, NULL);
+    if (mAccel != "jetson") { // buggy jetson camera
+      g_object_set(e, "change", 1, NULL);
+    }
   }
   mElements.push_back(e);
 }

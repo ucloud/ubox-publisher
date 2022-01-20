@@ -117,7 +117,7 @@ gst_uv4l2src_class_init (GstUV4l2SrcClass * klass)
                 "capture height", G_MININT, G_MAXINT, 0, G_PARAM_READWRITE));
     g_object_class_install_property (gobject_class, PROP_CHANGE,
             g_param_spec_int ("change", "Change",
-                "change width, height and format flag", 0, 1, 1, G_PARAM_READWRITE));
+                "change width, height and format flag", 0, 1, 0, G_PARAM_READWRITE));
 
     basesrc_class->get_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_get_caps);
     basesrc_class->set_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_set_caps);
