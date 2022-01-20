@@ -51,6 +51,7 @@ struct _GstUV4l2Src {
   GstPushSrc parent_object;
   gchar *device;
   gint width, height;
+  gint change;
   gchar *format;         // v4l2 format, videodev2.h
   gint rate_numerator;
   gint rate_denominator;

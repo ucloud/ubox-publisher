@@ -53,7 +53,8 @@ enum
     PROP_DEVICE,
     PROP_FORMAT,
     PROP_WIDTH,
-    PROP_HEIGHT
+    PROP_HEIGHT,
+    PROP_CHANGE
 };
 
 static GstStaticPadTemplate srctemplate = GST_STATIC_PAD_TEMPLATE ("src",
@@ -114,6 +115,9 @@ gst_uv4l2src_class_init (GstUV4l2SrcClass * klass)
     g_object_class_install_property (gobject_class, PROP_HEIGHT,
             g_param_spec_int ("height", "Height",
                 "capture height", G_MININT, G_MAXINT, 0, G_PARAM_READWRITE));
+    g_object_class_install_property (gobject_class, PROP_CHANGE,
+            g_param_spec_int ("change", "Change",
+                "change width, height and format flag", 0, 1, 1, G_PARAM_READWRITE));
 
     basesrc_class->get_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_get_caps);
     basesrc_class->set_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_set_caps);
@@ -180,6 +184,9 @@ gst_uv4l2src_set_property (GObject * object, guint prop_id, const GValue * value
         case PROP_HEIGHT:
             src->height = g_value_get_int (value);
             break;
+        case PROP_CHANGE:
+            src->change = g_value_get_int (value);
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -207,6 +214,9 @@ gst_uv4l2src_get_property (GObject * object, guint prop_id, GValue * value,
             break;
         case PROP_HEIGHT:
             g_value_set_int (value, src->height);
+            break;
+        case PROP_CHANGE:
+            g_value_set_int (value, src->change);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -611,21 +621,25 @@ gst_uv4l2src_start (GstBaseSrc * bsrc)
         return FALSE;
     }
 
-    //fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    //fmt.fmt.pix.width = src->width;
-    //fmt.fmt.pix.height = src->height;
-    //fmt.fmt.pix.pixelformat = v4l2_fourcc(a, b, c, d);
-    //fmt.fmt.pix.field = V4L2_FIELD_NONE;
+    if (src->change) {
+        g_print("uv4l2src: change setting to width:%u, height:%u, pixelformat:%c%c%c%c\n",
+                src->width, src->height, a, b, c, d);
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        fmt.fmt.pix.width = src->width;
+        fmt.fmt.pix.height = src->height;
+        fmt.fmt.pix.pixelformat = v4l2_fourcc(a, b, c, d);
+        fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
-    //if (ioctl(src->fd, VIDIOC_S_FMT, &fmt) == -1) {
-    //    GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("ioctl VIDIOC_S_FMT failed, %s", strerror(errno)), NULL);
-    //    return FALSE;
-    //}
-    //if (fmt.fmt.pix.pixelformat != v4l2_fourcc(a, b, c, d)) {
-    //    GST_ELEMENT_ERROR(src, RESOURCE, FAILED,
-    //            ("unsupported format %s, cur is %u", src->format, fmt.fmt.pix.pixelformat), NULL);
-    //    return FALSE;
-    //}
+        if (ioctl(src->fd, VIDIOC_S_FMT, &fmt) == -1) {
+            GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("ioctl VIDIOC_S_FMT failed, %s", strerror(errno)), NULL);
+            return FALSE;
+        }
+        if (fmt.fmt.pix.pixelformat != v4l2_fourcc(a, b, c, d)) {
+            GST_ELEMENT_ERROR(src, RESOURCE, FAILED,
+                    ("unsupported format %s, cur is %u", src->format, fmt.fmt.pix.pixelformat), NULL);
+            return FALSE;
+        }
+    }
 
     return init_v4l2_buffer(src);
 }
