@@ -235,7 +235,7 @@ int MediaStream::setupPipeline() {
   if (mInputType == inputRTSP) {
     addDepay();
     addDecoder();
-  } else if (mInputType == inputV4L2) {
+  } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
     addVideoRate();
     addFilterFramerate();
   }
