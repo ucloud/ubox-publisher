@@ -1,5 +1,7 @@
 #include "MediaStream.h"
 #include "tinylog/tlog.h"
+#include <fstream>
+#include <sstream>
 
 const char *inputWrhCamera = "wrh-fpga";
 const char *inputRTSP = "rtsp";
@@ -8,6 +10,14 @@ const char *inputV4L2 = "v4l2";
 const char *accelJetson = "jetson";
 const char *accelIntel = "intel";
 
+static inline int isNumber(const char s[]) {
+  for (int i = 0; s[i] != '\0'; i++) {
+    if (isdigit(s[i]) == 0)
+      return 0;
+  }
+  return 1;
+}
+
 MediaStream::MediaStream() {
   mOpened = false;
   mEnd = false;
@@ -15,6 +25,29 @@ MediaStream::MediaStream() {
 }
 
 MediaStream::~MediaStream() {}
+
+int MediaStream::setInputType(const char *deviceName) {
+  if (isNumber(deviceName))
+    mInputType = inputWrhCamera;
+  else if (strstr(deviceName, "/dev/video") == deviceName)
+    mInputType = inputV4L2;
+  else if (strstr(deviceName, "rtsp") == deviceName)
+    mInputType = inputRTSP;
+  if (mInputType.empty())
+    return -1;
+  return 0;
+}
+
+int MediaStream::setAccel() {
+  std::ifstream t("/proc/cpuinfo");
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  if (buffer.str().find("Intel") != std::string::npos)
+    mAccel = accelIntel;
+  else
+    mAccel = accelJetson;
+  return 0;
+}
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight, bool copy,
@@ -26,15 +59,24 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
     lock.unlock();
     return -1;
   }
+
+  int ret = setInputType(deviceName);
+  if (ret < 0) {
+    tlog(TLOG_ERROR, "unknown device, device=%s", deviceName);
+    lock.unlock();
+    return -1;
+  }
+  setAccel();
+
   mOpened = true;
   lock.unlock();
 
-  if (inputType == NULL || strlen(inputType) == 0)
-    mInputType = inputV4L2;
-  else
+  if (strlen(inputType) > 0)
     mInputType = inputType;
+
   mDeviceName = deviceName;
-  mAccel = accel;
+  if (strlen(accel) > 0)
+    mAccel = accel;
   mSrcWidth = srcWidth;
   mSrcHeight = srcHeight;
   mStreamCopy = copy;
@@ -44,6 +86,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mBitrate = bitrate;
   mUrl = url;
 
+  tlog(TLOG_INFO, "input=%s,accel=%s", mInputType.c_str(), mAccel.c_str());
   mQuit = false;
   mRestart = true;
   mStreamThread = std::thread(&MediaStream::loop_run, this);

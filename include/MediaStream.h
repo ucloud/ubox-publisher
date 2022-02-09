@@ -42,6 +42,8 @@ private:
     void loop_run();
     void run();
     void process();
+    int setInputType(const char *deviceName);
+    int setAccel();
 
 private:
     bool mQuit;
