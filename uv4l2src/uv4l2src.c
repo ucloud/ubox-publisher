@@ -54,7 +54,8 @@ enum
     PROP_FORMAT,
     PROP_WIDTH,
     PROP_HEIGHT,
-    PROP_CHANGE
+    PROP_CHANGE,
+    PROP_FPS
 };
 
 static GstStaticPadTemplate srctemplate = GST_STATIC_PAD_TEMPLATE ("src",
@@ -74,9 +75,6 @@ static void gst_uv4l2src_set_property (GObject * object, guint prop_id,
 static void gst_uv4l2src_get_property (GObject * object, guint prop_id,
         GValue * value, GParamSpec * pspec);
 
-static GstCaps *gst_uv4l2src_fixate (GstBaseSrc * bsrc, GstCaps * caps);
-static gboolean gst_uv4l2src_set_caps (GstBaseSrc * bsrc,
-    GstCaps * caps);
 static GstCaps *gst_uv4l2src_get_caps (GstBaseSrc * bsrc,
     GstCaps * filter);
 static gboolean gst_uv4l2src_start (GstBaseSrc * src);
@@ -118,13 +116,14 @@ gst_uv4l2src_class_init (GstUV4l2SrcClass * klass)
     g_object_class_install_property (gobject_class, PROP_CHANGE,
             g_param_spec_int ("change", "Change",
                 "change width, height and format flag", 0, 1, 0, G_PARAM_READWRITE));
+    g_object_class_install_property (gobject_class, PROP_FPS,
+            g_param_spec_int ("fps", "FPS",
+                "frame rate", G_MININT, G_MAXINT, 0, G_PARAM_READWRITE));
 
     basesrc_class->get_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_get_caps);
-    basesrc_class->set_caps = GST_DEBUG_FUNCPTR (gst_uv4l2src_set_caps);
     basesrc_class->start = GST_DEBUG_FUNCPTR (gst_uv4l2src_start);
     basesrc_class->stop = GST_DEBUG_FUNCPTR (gst_uv4l2src_stop);
     basesrc_class->unlock = GST_DEBUG_FUNCPTR (gst_uv4l2src_unlock);
-    basesrc_class->fixate = GST_DEBUG_FUNCPTR (gst_uv4l2src_fixate);
 
     pushsrc_class->create = gst_uv4l2src_create;
 
@@ -145,6 +144,8 @@ gst_uv4l2src_init (GstUV4l2Src * src)
     src->buf_count = 0;
     src->device = strdup(DEFAULT_PROP_DEVICE);
     src->format = strdup(DEFAULT_PROP_FORMAT);
+    src->rate_numerator = 30;
+    src->rate_denominator = 1;
     src->is_capture = FALSE;
     gst_base_src_set_format (GST_BASE_SRC (src), GST_FORMAT_TIME);
     gst_base_src_set_live (GST_BASE_SRC (src), TRUE);
@@ -187,6 +188,10 @@ gst_uv4l2src_set_property (GObject * object, guint prop_id, const GValue * value
         case PROP_CHANGE:
             src->change = g_value_get_int (value);
             break;
+        case PROP_FPS:
+            src->rate_numerator = g_value_get_int (value);
+            src->rate_denominator = 1;
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -217,6 +222,9 @@ gst_uv4l2src_get_property (GObject * object, guint prop_id, GValue * value,
             break;
         case PROP_CHANGE:
             g_value_set_int (value, src->change);
+            break;
+        case PROP_FPS:
+            g_value_set_int (value, src->rate_numerator);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -366,48 +374,6 @@ static gboolean do_video_capture(GstUV4l2Src * src, GstBuffer * buf) {
     return TRUE;
 }
 
-    static GstCaps *
-gst_uv4l2src_fixate (GstBaseSrc * bsrc, GstCaps * caps)
-{
-    GstStructure *structure;
-
-    caps = gst_caps_make_writable (caps);
-
-    structure = gst_caps_get_structure (caps, 0);
-
-    gst_structure_fixate_field_nearest_int (structure, "width", 640);
-    gst_structure_fixate_field_nearest_int (structure, "height", 480);
-    gst_structure_fixate_field_nearest_fraction (structure, "framerate", 24, 1);
-
-    caps = GST_BASE_SRC_CLASS (parent_class)->fixate (bsrc, caps);
-
-    return caps;
-}
-
-    static gboolean
-gst_uv4l2src_set_caps (GstBaseSrc * bsrc, GstCaps * caps)
-{
-    GstUV4l2Src *src = GST_UV4L2SRC (bsrc);
-    GstStructure *structure;
-    const GValue *framerate;
-
-    structure = gst_caps_get_structure (caps, 0);
-
-    framerate = gst_structure_get_value (structure, "framerate");
-    if (framerate) {
-        src->rate_numerator = gst_value_get_fraction_numerator (framerate);
-        src->rate_denominator = gst_value_get_fraction_denominator (framerate);
-    }
-
-    GST_DEBUG_OBJECT (src, "v4l2 format %s, size %dx%d, %d/%d fps",
-            src->format,
-            src->width,
-            src->height,
-            src->rate_numerator, src->rate_denominator);
-
-    return TRUE;
-}
-
 static GstVideoFormat
 gst_v4l2_object_v4l2fourcc_to_video_format (guint32 fourcc)
 {
@@ -530,14 +496,7 @@ gst_uv4l2src_get_caps (GstBaseSrc * bsrc, GstCaps * filter)
             "format", G_TYPE_STRING, gst_video_format_to_string(fmt),
             "width", G_TYPE_INT, src->width,
             "height", G_TYPE_INT, src->height,
-            "framerate", GST_TYPE_FRACTION_RANGE, 1, G_MAXINT, G_MAXINT, 1, NULL);
-
-    if (filter) {
-        GstCaps *tmp =
-            gst_caps_intersect_full (filter, caps, GST_CAPS_INTERSECT_FIRST);
-        gst_caps_unref (caps);
-        caps = tmp;
-    }
+            "framerate", GST_TYPE_FRACTION, src->rate_numerator, src->rate_denominator, NULL);
 
     return caps;
 }

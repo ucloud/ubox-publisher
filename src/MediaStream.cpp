@@ -147,11 +147,11 @@ void MediaStream::addSource() {
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
-                 "height", mSrcHeight, NULL);
+                 "height", mSrcHeight, "FPS", mFps, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
-                 mSrcHeight, NULL);
+                 mSrcHeight, "FPS", mFps, NULL);
     if (mAccel != "jetson") { // buggy jetson camera
       g_object_set(e, "change", 1, NULL);
     }
@@ -281,9 +281,6 @@ int MediaStream::setupPipeline() {
   if (mInputType == inputRTSP) {
     addDepay();
     addDecoder();
-  } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
-    addVideoRate();
-    addFilterFramerate();
   }
   // scale
   addScale();
