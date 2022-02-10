@@ -22,6 +22,7 @@ MediaStream::MediaStream() {
   mOpened = false;
   mEnd = false;
   mFinish = false;
+  mLimitFPS = 0;
 }
 
 MediaStream::~MediaStream() {}
@@ -51,7 +52,7 @@ int MediaStream::setAccel() {
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight, bool copy,
-                      int dstWidth, int dstHeight, int fps, int bitrate,
+                      int dstWidth, int dstHeight, int fps, int limitfps, int bitrate,
                       const char *url) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
@@ -83,6 +84,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mDstWidth = dstWidth;
   mDstHeight = dstHeight;
   mFps = fps;
+  mLimitFPS = limitfps;
   mBitrate = bitrate;
   mUrl = url;
 
@@ -168,7 +170,7 @@ void MediaStream::addFilterFramerate() {
   GstElement *e = gst_element_factory_make("capsfilter", "filter_framerate");
   GstCaps *caps;
   caps = gst_caps_new_simple("video/x-raw", "framerate", GST_TYPE_FRACTION,
-                             mFps, 1, NULL);
+                             mLimitFPS, 1, NULL);
   g_object_set(e, "caps", caps, NULL);
   gst_caps_unref(caps);
   mElements.push_back(e);
@@ -281,6 +283,11 @@ int MediaStream::setupPipeline() {
   if (mInputType == inputRTSP) {
     addDepay();
     addDecoder();
+  } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
+      if (mLimitFPS > 0) {
+          addVideoRate();
+          addFilterFramerate();
+      }
   }
   // scale
   addScale();

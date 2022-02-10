@@ -9,7 +9,7 @@ public:
     ~ControlHandler();
 
     int StartStream(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
-                    bool copy, int dstWidth, int dstHeight, int fps, int bitrate,
+                    bool copy, int dstWidth, int dstHeight, int fps, int limitfps, int bitrate,
                     const char* rtmpURL);
     int StopStream(const char* deviceName);
     int SetBitrate(const char* deviceName, int bitrate);

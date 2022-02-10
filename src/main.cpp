@@ -11,7 +11,7 @@
 void showUsage() {
   std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s "
                "v4l2] [-d input]"
-               "[-c] [-f 24] [-w 640] [-h 480] [-b 2000] [-p intel|jetson][-a "
+               "[-c] [-f 24] [-w 640] [-h 480] [-b 2000] [-F 16] [-p intel|jetson][-a "
                "rtmp://x.x.x] [-v]"
             << std::endl;
   std::cout << "    -s input source type, rtsp|v4l2|fpga-wrh" << std::endl
@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   int width = 0;
   int height = 0;
   int fps = 0;
+  int limitfps = 0;
   int bitrate = 2000;
   bool copy = false;
   bool verbose = false;
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]) {
   if (argc < 2) {
     showUsage();
   }
-  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:h:f:b:p:cv")) != -1) {
+  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:h:f:F:b:p:cv")) != -1) {
     switch (ch) {
     case 'u':
       sock_path = optarg;
@@ -67,6 +68,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       fps = atoi(optarg);
+      break;
+    case 'F':
+      limitfps = atoi(optarg);
       break;
     case 'b':
       bitrate = atoi(optarg);
@@ -109,7 +113,7 @@ int main(int argc, char *argv[]) {
     tlog(TLOG_INFO, "(device) %s, (accel) %s, (url) %s\n", deviceName.c_str(),
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
-                        width, height, copy, 640, 480, fps, bitrate,
+                        width, height, copy, 640, 480, fps, limitfps, bitrate,
                         url.c_str());
   }
 
