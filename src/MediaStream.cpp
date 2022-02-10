@@ -7,6 +7,7 @@ const char *inputWrhCamera = "wrh-fpga";
 const char *inputRTSP = "rtsp";
 const char *inputV4L2 = "v4l2";
 
+const char *accelNone = "none";
 const char *accelJetson = "jetson";
 const char *accelIntel = "intel";
 
@@ -23,6 +24,7 @@ MediaStream::MediaStream() {
   mEnd = false;
   mFinish = false;
   mLimitFPS = 0;
+  mAccel = accelNone;
 }
 
 MediaStream::~MediaStream() {}
@@ -45,15 +47,18 @@ int MediaStream::setAccel() {
   buffer << t.rdbuf();
   if (buffer.str().find("Intel") != std::string::npos)
     mAccel = accelIntel;
-  else
-    mAccel = accelJetson;
+  else {
+    std::ifstream f("/etc/nv_tegra_release");
+    if (f.is_open())
+      mAccel = accelJetson;
+  }
   return 0;
 }
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight, bool copy,
-                      int dstWidth, int dstHeight, int fps, int limitfps, int bitrate,
-                      const char *url) {
+                      int dstWidth, int dstHeight, int fps, int limitfps,
+                      int bitrate, const char *url) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
     tlog(TLOG_INFO, "media stream reopen");
@@ -88,7 +93,9 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mBitrate = bitrate;
   mUrl = url;
 
-  tlog(TLOG_INFO, "input=%s,accel=%s", mInputType.c_str(), mAccel.c_str());
+  tlog(TLOG_INFO, "input=%s,accel=%s,fps=%d,limitfps=%d", mInputType.c_str(),
+       mAccel.c_str(), mFps, mLimitFPS);
+
   mQuit = false;
   mRestart = true;
   mStreamThread = std::thread(&MediaStream::loop_run, this);
@@ -284,10 +291,10 @@ int MediaStream::setupPipeline() {
     addDepay();
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
-      if (mLimitFPS > 0) {
-          addVideoRate();
-          addFilterFramerate();
-      }
+    if (mLimitFPS > 0) {
+      addVideoRate();
+      addFilterFramerate();
+    }
   }
   // scale
   addScale();
