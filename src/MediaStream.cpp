@@ -147,11 +147,11 @@ void MediaStream::addSource() {
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
-                 "height", mSrcHeight, "FPS", mFps, NULL);
+                 "height", mSrcHeight, "fps", mFps, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
-                 mSrcHeight, "FPS", mFps, NULL);
+                 mSrcHeight, "fps", mFps, NULL);
     if (mAccel != "jetson") { // buggy jetson camera
       g_object_set(e, "change", 1, NULL);
     }
