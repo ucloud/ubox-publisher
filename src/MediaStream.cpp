@@ -168,6 +168,12 @@ void MediaStream::addSource() {
   mElements.push_back(e);
 }
 
+void MediaStream::addClock() {
+  GstElement *e = gst_element_factory_make("uclockoverlay", "uclockoverlay");
+  g_object_set(e, "ypad", 5, "font-desc", "Helvetica 15", NULL);
+  mElements.push_back(e);
+}
+
 void MediaStream::addVideoRate() {
   GstElement *e = gst_element_factory_make("videorate", "videorate");
   mElements.push_back(e);
@@ -291,6 +297,7 @@ int MediaStream::setupPipeline() {
     addDepay();
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
+    addClock();
     if (mLimitFPS > 0) {
       addVideoRate();
       addFilterFramerate();

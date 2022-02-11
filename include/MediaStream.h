@@ -27,6 +27,7 @@ private:
     static void onRtspPadAdded(GstElement *src, GstPad *src_pad, gpointer user_data);
     int setupPipeline();
     void addSource();
+    void addClock();
     void addVideoRate();
     void addFilterFramerate();
     void addDepay();

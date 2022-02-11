@@ -17,16 +17,19 @@ rtmp stream publisher
 
 * CentOS 8 (gstreamer-vaapi self compiling)
 ```bash
-# setup rpmfusion repo, https://mirrors.tuna.tsinghua.edu.cn/help/rpmfusion/
-yum install gstreamer1 gstreamer1-libav gstreamer1-plugins-base.x86_64 gstreamer1-plugins-bad-free.x86_64 \
-    gstreamer1-plugins-good.x86_64 gstreamer1-plugins-ugly.x86_64 gstreamer1-plugins-ugly-free.x86_64 \
-    libva-intel-driver.x86_64 gstreamer1-plugins-bad-freeworld
+# setup rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
+yum install gstreamer1-devel \ 
+    gstreamer1 gstreamer1-libav gstreamer1-plugins-base gstreamer1-plugins-bad-free \
+    gstreamer1-plugins-good gstreamer1-plugins-ugly gstreamer1-plugins-ugly-free \
+    libva-intel-driver gstreamer1-plugins-bad-freeworld
 ```
 
 * Ubuntu 18.04
 ```bash
-apt-get install gstreamer1.0-plugins-ugly gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-bad gstreamer1.0-tools gstreamer1.0-rtsp gstreamer1.0-vaapi  gstreamer1.0-libav
+apt-get install libgstreamer1.0-dev libgstreamer1.0-0 libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-0 \
+    libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-0 \
+        gstreamer1.0-plugins-ugly gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-bad gstreamer1.0-tools gstreamer1.0-rtsp gstreamer1.0-vaapi  gstreamer1.0-libav
 ```
 
 2. compile
