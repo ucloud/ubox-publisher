@@ -4,27 +4,69 @@ rtmp stream publisher
 
 1. hardware acceleration, support Intel HD graphics/Jetson
 2. RTSP/v4l2/custom FPGA pull, rtmp push
+3. much higher performance v4l2 element
 
 ### Performance
 
-| hardware platform | input | output | cpu usage | encode latency |
-| --- | --- | --- | --- |
-| Jetson Xavier NX | v4l2,1280*720,YUYV,30fps | rtmp,h264 high yuv420p,640*360,30fps,2Mbps |  12% | todo |
-| Intel J1900 | rtsp,h264 main yuv420p,1280*720,25fps |  rtmp,h264 high yuv420p,640*480,25fps,2Mbps | 17% | 4ms |
+| hardware platform | input | output | cpu usage | process latency |
+| --- | --- | --- | --- | -- |
+| Jetson Xavier NX | v4l2,1280*720,YUYV,30fps | rtmp,h264 high yuv420p,640*360,30fps,2Mbps |  10% | ![proctime.png](doc/jetson-proctime.png) |
+| Intel J1900 | rtsp,h264 main yuv420p,1280*720,25fps |  rtmp,h264 high yuv420p,640*480,25fps,2Mbps | 17% | todo |
+
+#### Latency
+
+Jetson Xavier NX, video encode uses 3ms about, add timestamp uses 3ms about and video resolution change uses 5ms abount.
 
 ### Install
-1. dependency
 
-* CentOS 8 (gstreamer-vaapi self compiling)
+* Centos 8
+
 ```bash
-# setup rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
+wget -O /etc/yum.repos.d/ubox.repo https://ubox-repo.ucloud.cn/repos/rpm/rhel8/ubox.repo
+yum install ubox-publisher
+```
+
+* Ubuntu 18.04/20.04
+
+```bash
+apt-key adv --fetch-keys http://ubox-deb.ucloud.cn/DEB-GPG-KEY-ubox
+echo 'deb http://ubox-deb.ucloud.cn/repos/deb/all focal ubox' >> /etc/apt/sources.list
+apt-get update
+apt install ubox-publisher
+```
+
+### Test && Usage
+
+1. run server,
+
+```bash
+ubox-publisher -u @/tmp/publisher.sock
+```
+
+2. test
+
+```bash
+# adjust json file
+./build/test/cli @/tmp/publisher.sock < ./test/request/PushStream.json
+```
+
+### Self compiling
+
+1. dependency install
+
+* CentOS 8
+
+setup epel repo and rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
+
+```bash
 yum install gstreamer1-devel \ 
-    gstreamer1 gstreamer1-libav gstreamer1-plugins-base gstreamer1-plugins-bad-free \
+    gstreamer1 gstreamer1-libav gstreamer1-vaapi gstreamer1-plugins-base gstreamer1-plugins-bad-free \
     gstreamer1-plugins-good gstreamer1-plugins-ugly gstreamer1-plugins-ugly-free \
     libva-intel-driver gstreamer1-plugins-bad-freeworld
 ```
 
 * Ubuntu 18.04
+
 ```bash
 apt-get install libgstreamer1.0-dev libgstreamer1.0-0 libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-0 \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-0 \
@@ -36,17 +78,4 @@ apt-get install libgstreamer1.0-dev libgstreamer1.0-0 libgstreamer-plugins-bad1.
 
 ```bash
 mkdir build && cd build && cmake .. && make install
-```
-
-### Test && Usage
-
-1. run server,
-```bash
-ubox-publisher -u @/tmp/publisher.sock
-```
-
-2. test
-```bash
-# adjust json file
-./build/test/cli @/tmp/publisher.sock < ./test/request/PushStream.json
 ```
