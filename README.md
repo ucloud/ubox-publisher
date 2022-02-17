@@ -13,9 +13,11 @@ rtmp stream publisher
 | Jetson Xavier NX | v4l2,1280*720,YUYV,30fps | rtmp,h264 high yuv420p,640*360,30fps,2Mbps |  10% | ![proctime.png](doc/jetson-proctime.png) |
 | Intel J1900 | rtsp,h264 main yuv420p,1280*720,25fps |  rtmp,h264 high yuv420p,640*480,25fps,2Mbps | 17% | todo |
 
-#### Latency
+#### Latency explain
 
-Jetson Xavier NX, video encode uses 3ms about, add timestamp uses 3ms about and video resolution change uses 5ms abount.
+process: add timestamp -> change video resolution -> video encode
+
+Jetson Xavier NX, add timestamp uses about 3ms, video resolution change uses about 5ms and video encode uses about 3ms.
 
 ### Install
 
