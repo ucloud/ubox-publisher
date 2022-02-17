@@ -21,6 +21,8 @@ Jetson Xavier NX, video encode uses 3ms about, add timestamp uses 3ms about and 
 
 * Centos 8
 
+setup epel repo and rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
+
 ```bash
 wget -O /etc/yum.repos.d/ubox.repo https://ubox-repo.ucloud.cn/repos/rpm/rhel8/ubox.repo
 yum install ubox-publisher
@@ -59,7 +61,7 @@ ubox-publisher -u @/tmp/publisher.sock
 setup epel repo and rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
 
 ```bash
-yum install gstreamer1-devel \ 
+yum install glib2 pango-devel cairo-devel gstreamer1-devel gstreamer1-plugins-base-devel \ 
     gstreamer1 gstreamer1-libav gstreamer1-vaapi gstreamer1-plugins-base gstreamer1-plugins-bad-free \
     gstreamer1-plugins-good gstreamer1-plugins-ugly gstreamer1-plugins-ugly-free \
     libva-intel-driver gstreamer1-plugins-bad-freeworld

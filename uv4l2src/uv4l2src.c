@@ -374,6 +374,47 @@ static gboolean do_video_capture(GstUV4l2Src * src, GstBuffer * buf) {
     return TRUE;
 }
 
+// fix for centos 7
+#ifndef v4l2_fourcc_be
+#define v4l2_fourcc_be(a, b, c, d)  (v4l2_fourcc(a, b, c, d) | (1U << 31))
+#endif
+
+#ifndef V4L2_PIX_FMT_Y16_BE
+#define V4L2_PIX_FMT_Y16_BE v4l2_fourcc_be('Y', '1', '6', ' ') /* 16  Greyscale BE  */
+#endif
+
+#ifndef V4L2_PIX_FMT_XRGB555
+#define V4L2_PIX_FMT_XRGB555 v4l2_fourcc('X', 'R', '1', '5') /* 16  XRGB-1-5-5-5  */
+#endif
+
+#ifndef V4L2_PIX_FMT_XRGB555X
+#define V4L2_PIX_FMT_XRGB555X v4l2_fourcc_be('X', 'R', '1', '5') /* 16  XRGB-5-5-5 BE */
+#endif
+
+#ifndef V4L2_PIX_FMT_XRGB32
+#define V4L2_PIX_FMT_XRGB32 v4l2_fourcc('B', 'X', '2', '4') /* 32  XRGB-8-8-8-8  */
+#endif
+
+#ifndef V4L2_PIX_FMT_XBGR32
+#define V4L2_PIX_FMT_XBGR32 v4l2_fourcc('X', 'R', '2', '4') /* 32  BGRX-8-8-8-8  */
+#endif
+
+#ifndef V4L2_PIX_FMT_ABGR32
+#define V4L2_PIX_FMT_ABGR32 v4l2_fourcc('A', 'R', '2', '4') /* 32  BGRA-8-8-8-8  */
+#endif
+
+#ifndef V4L2_PIX_FMT_ARGB32
+#define V4L2_PIX_FMT_ARGB32 v4l2_fourcc('B', 'A', '2', '4') /* 32  ARGB-8-8-8-8  */
+#endif
+
+#ifndef V4L2_PIX_FMT_NV16M
+#define V4L2_PIX_FMT_NV16M v4l2_fourcc('N', 'M', '1', '6') /* 16  Y/CbCr 4:2:2  */
+#endif
+
+#ifndef V4L2_PIX_FMT_NV61M
+#define V4L2_PIX_FMT_NV61M v4l2_fourcc('N', 'M', '6', '1') /* 16  Y/CrCb 4:2:2  */
+#endif
+
 static GstVideoFormat
 gst_v4l2_object_v4l2fourcc_to_video_format (guint32 fourcc)
 {
@@ -502,7 +543,8 @@ gst_uv4l2src_get_caps (GstBaseSrc * bsrc, GstCaps * filter)
 }
 
 inline void unmap_buffer(GstUV4l2Src *src, int end) {
-    for (int i = 0; i != end; ++i) {
+    int i;
+    for (i = 0; i != end; ++i) {
         munmap(src->queue_buf[i].data, src->queue_buf[i].length);
     }
 }
@@ -511,6 +553,7 @@ static gboolean
 init_v4l2_buffer(GstUV4l2Src *src) {
     struct v4l2_requestbuffers reqbuf;
     struct v4l2_buffer buf;
+    int i;
 
     reqbuf.count = 4;
     reqbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -527,7 +570,7 @@ init_v4l2_buffer(GstUV4l2Src *src) {
 
     src->buf_count = reqbuf.count;
 
-    for (int i = 0; i < src->buf_count; ++i) {
+    for (i = 0; i < src->buf_count; ++i) {
         buf.index = i;
         buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buf.memory = V4L2_MEMORY_MMAP;
