@@ -52,7 +52,7 @@ if (${LINUXOS} STREQUAL "centos") #centos 7/8
 else()
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgstreamer1.0-0, libglib2.0-0, libpango-1.0-0, gstreamer1.0-plugins-ugly, gstreamer1.0-plugins-good, gstreamer1.0-plugins-base, gstreamer1.0-plugins-bad, gstreamer1.0-tools, gstreamer1.0-rtsp, gstreamer1.0-vaapi, gstreamer1.0-libav, librtmp1 (== 2.4+20151223.gitfa8646d.1-2)")  #ubuntu 18.04/20.04
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgstreamer1.0-0, libglib2.0-0, libpango-1.0-0, gstreamer1.0-plugins-ugly, gstreamer1.0-plugins-good, gstreamer1.0-plugins-base, gstreamer1.0-plugins-bad, gstreamer1.0-tools, gstreamer1.0-rtsp, gstreamer1.0-vaapi, gstreamer1.0-libav, librtmp1 (=2.4+20151223.gitfa8646d.1-2)")  #ubuntu 18.04/20.04
 endif ()
 
 include(CPack)

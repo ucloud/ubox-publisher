@@ -324,7 +324,7 @@ gst_base_text_overlay_get_type (void)
     };
 
     g_once_init_leave ((gsize *) & type,
-        g_type_register_static (GST_TYPE_ELEMENT, "GstBaseTextOverlay", &info,
+        g_type_register_static (GST_TYPE_ELEMENT, "GstBaseUTextOverlay", &info,
             0));
   }
 
