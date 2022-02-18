@@ -72,7 +72,7 @@ yum install glib2 pango-devel cairo-devel gstreamer1-devel gstreamer1-plugins-ba
 * Ubuntu 18.04
 
 ```bash
-apt-get install libgstreamer1.0-dev libgstreamer1.0-0 libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-0 \
+apt-get install libpango1.0-dev libgstreamer1.0-dev libgstreamer1.0-0 libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-0 \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-0 \
         gstreamer1.0-plugins-ugly gstreamer1.0-plugins-good gstreamer1.0-plugins-base \
         gstreamer1.0-plugins-bad gstreamer1.0-tools gstreamer1.0-rtsp gstreamer1.0-vaapi  gstreamer1.0-libav

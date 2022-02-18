@@ -6,6 +6,7 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/wrhcamerasrc/CMakeLists.txt)
 endif ()
 add_subdirectory(uv4l2src)
 add_subdirectory(uclockoverlay)
+add_subdirectory(uflv)
 add_subdirectory(test)
 
 execute_process(
