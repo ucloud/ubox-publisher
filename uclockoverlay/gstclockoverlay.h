@@ -29,29 +29,29 @@ G_BEGIN_DECLS
 #define GST_TYPE_CLOCK_OVERLAY \
   (gst_clock_overlay_get_type())
 #define GST_CLOCK_OVERLAY(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_CLOCK_OVERLAY,GstClockOverlay))
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_CLOCK_OVERLAY,GstUClockOverlay))
 #define GST_CLOCK_OVERLAY_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_CLOCK_OVERLAY,GstClockOverlayClass))
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_CLOCK_OVERLAY,GstUClockOverlayClass))
 #define GST_IS_CLOCK_OVERLAY(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_CLOCK_OVERLAY))
 #define GST_IS_CLOCK_OVERLAY_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_CLOCK_OVERLAY))
 
-typedef struct _GstClockOverlay GstClockOverlay;
-typedef struct _GstClockOverlayClass GstClockOverlayClass;
+typedef struct _GstUClockOverlay GstUClockOverlay;
+typedef struct _GstUClockOverlayClass GstUClockOverlayClass;
 
 /**
- * GstClockOverlay:
+ * GstUClockOverlay:
  *
  * Opaque clockoverlay data structure.
  */
-struct _GstClockOverlay {
+struct _GstUClockOverlay {
   GstBaseTextOverlay textoverlay;
   gchar         *format; /* as in strftime () */
   gchar         *text;
 };
 
-struct _GstClockOverlayClass {
+struct _GstUClockOverlayClass {
   GstBaseTextOverlayClass parent_class;
 };
 

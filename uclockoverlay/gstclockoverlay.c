@@ -63,7 +63,7 @@ enum
 };
 
 #define gst_clock_overlay_parent_class parent_class
-G_DEFINE_TYPE (GstClockOverlay, gst_clock_overlay, GST_TYPE_BASE_TEXT_OVERLAY);
+G_DEFINE_TYPE (GstUClockOverlay, gst_clock_overlay, GST_TYPE_BASE_TEXT_OVERLAY);
 
 static void gst_clock_overlay_finalize (GObject * object);
 static void gst_clock_overlay_set_property (GObject * object, guint prop_id,
@@ -72,7 +72,7 @@ static void gst_clock_overlay_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
 static gchar *
-gst_clock_overlay_render_time (GstClockOverlay * overlay)
+gst_clock_overlay_render_time (GstUClockOverlay * overlay)
 {
   struct tm *t;
   time_t now;
@@ -111,7 +111,7 @@ gst_clock_overlay_get_text (GstBaseTextOverlay * overlay,
     GstBuffer * video_frame)
 {
   gchar *time_str, *txt, *ret;
-  GstClockOverlay *clock_overlay = GST_CLOCK_OVERLAY (overlay);
+  GstUClockOverlay *clock_overlay = GST_CLOCK_OVERLAY (overlay);
 
   txt = g_strdup (overlay->default_text);
 
@@ -136,7 +136,7 @@ gst_clock_overlay_get_text (GstBaseTextOverlay * overlay,
 }
 
 static void
-gst_clock_overlay_class_init (GstClockOverlayClass * klass)
+gst_clock_overlay_class_init (GstUClockOverlayClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -186,7 +186,7 @@ gst_clock_overlay_class_init (GstClockOverlayClass * klass)
 static void
 gst_clock_overlay_finalize (GObject * object)
 {
-  GstClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
+  GstUClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
 
   g_free (overlay->format);
   g_free (overlay->text);
@@ -197,7 +197,7 @@ gst_clock_overlay_finalize (GObject * object)
 
 
 static void
-gst_clock_overlay_init (GstClockOverlay * overlay)
+gst_clock_overlay_init (GstUClockOverlay * overlay)
 {
   GstBaseTextOverlay *textoverlay;
 
@@ -214,7 +214,7 @@ static void
 gst_clock_overlay_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  GstClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
+  GstUClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
 
   GST_OBJECT_LOCK (overlay);
   switch (prop_id) {
@@ -234,7 +234,7 @@ static void
 gst_clock_overlay_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  GstClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
+  GstUClockOverlay *overlay = GST_CLOCK_OVERLAY (object);
 
   GST_OBJECT_LOCK (overlay);
   switch (prop_id) {
