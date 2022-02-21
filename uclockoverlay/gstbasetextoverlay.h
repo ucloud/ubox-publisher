@@ -34,25 +34,25 @@ G_BEGIN_DECLS
 
 #define GST_TYPE_BASE_TEXT_OVERLAY            (gst_base_text_overlay_get_type())
 #define GST_BASE_TEXT_OVERLAY(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),\
-                                         GST_TYPE_BASE_TEXT_OVERLAY, GstBaseTextOverlay))
+                                         GST_TYPE_BASE_TEXT_OVERLAY, GstBaseUTextOverlay))
 #define GST_BASE_TEXT_OVERLAY_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass),\
-                                         GST_TYPE_BASE_TEXT_OVERLAY,GstBaseTextOverlayClass))
+                                         GST_TYPE_BASE_TEXT_OVERLAY,GstBaseUTextOverlayClass))
 #define GST_BASE_TEXT_OVERLAY_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),\
-                                         GST_TYPE_BASE_TEXT_OVERLAY, GstBaseTextOverlayClass))
+                                         GST_TYPE_BASE_TEXT_OVERLAY, GstBaseUTextOverlayClass))
 #define GST_IS_BASE_TEXT_OVERLAY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj),\
                                          GST_TYPE_BASE_TEXT_OVERLAY))
 #define GST_IS_BASE_TEXT_OVERLAY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass),\
                                          GST_TYPE_BASE_TEXT_OVERLAY))
 
-typedef struct _GstBaseTextOverlay      GstBaseTextOverlay;
-typedef struct _GstBaseTextOverlayClass GstBaseTextOverlayClass;
+typedef struct _GstBaseUTextOverlay      GstBaseUTextOverlay;
+typedef struct _GstBaseUTextOverlayClass GstBaseUTextOverlayClass;
 
 /**
- * GstBaseTextOverlayVAlign:
+ * GstBaseUTextOverlayVAlign:
  * @GST_BASE_TEXT_OVERLAY_VALIGN_BASELINE: draw text on the baseline
  * @GST_BASE_TEXT_OVERLAY_VALIGN_BOTTOM: draw text on the bottom
  * @GST_BASE_TEXT_OVERLAY_VALIGN_TOP: draw text on top
- * @GST_BASE_TEXT_OVERLAY_VALIGN_POS: draw text according to the #GstBaseTextOverlay:ypos property
+ * @GST_BASE_TEXT_OVERLAY_VALIGN_POS: draw text according to the #GstBaseUTextOverlay:ypos property
  * @GST_BASE_TEXT_OVERLAY_VALIGN_CENTER: draw text vertically centered
  *
  * Vertical alignment of the text.
@@ -64,14 +64,14 @@ typedef enum {
     GST_BASE_TEXT_OVERLAY_VALIGN_POS,
     GST_BASE_TEXT_OVERLAY_VALIGN_CENTER,
     GST_BASE_TEXT_OVERLAY_VALIGN_ABSOLUTE
-} GstBaseTextOverlayVAlign;
+} GstBaseUTextOverlayVAlign;
 
 /**
- * GstBaseTextOverlayHAlign:
+ * GstBaseUTextOverlayHAlign:
  * @GST_BASE_TEXT_OVERLAY_HALIGN_LEFT: align text left
  * @GST_BASE_TEXT_OVERLAY_HALIGN_CENTER: align text center
  * @GST_BASE_TEXT_OVERLAY_HALIGN_RIGHT: align text right
- * @GST_BASE_TEXT_OVERLAY_HALIGN_POS: position text according to the #GstBaseTextOverlay:xpos property
+ * @GST_BASE_TEXT_OVERLAY_HALIGN_POS: position text according to the #GstBaseUTextOverlay:xpos property
  *
  * Horizontal alignment of the text.
  */
@@ -83,10 +83,10 @@ typedef enum {
     GST_BASE_TEXT_OVERLAY_HALIGN_UNUSED,
     GST_BASE_TEXT_OVERLAY_HALIGN_POS,
     GST_BASE_TEXT_OVERLAY_HALIGN_ABSOLUTE
-} GstBaseTextOverlayHAlign;
+} GstBaseUTextOverlayHAlign;
 
 /**
- * GstBaseTextOverlayWrapMode:
+ * GstBaseUTextOverlayWrapMode:
  * @GST_BASE_TEXT_OVERLAY_WRAP_MODE_NONE: no wrapping
  * @GST_BASE_TEXT_OVERLAY_WRAP_MODE_WORD: do word wrapping
  * @GST_BASE_TEXT_OVERLAY_WRAP_MODE_CHAR: do char wrapping
@@ -99,10 +99,10 @@ typedef enum {
     GST_BASE_TEXT_OVERLAY_WRAP_MODE_WORD = PANGO_WRAP_WORD,
     GST_BASE_TEXT_OVERLAY_WRAP_MODE_CHAR = PANGO_WRAP_CHAR,
     GST_BASE_TEXT_OVERLAY_WRAP_MODE_WORD_CHAR = PANGO_WRAP_WORD_CHAR
-} GstBaseTextOverlayWrapMode;
+} GstBaseUTextOverlayWrapMode;
 
 /**
- * GstBaseTextOverlayLineAlign:
+ * GstBaseUTextOverlayLineAlign:
  * @GST_BASE_TEXT_OVERLAY_LINE_ALIGN_LEFT: lines are left-aligned
  * @GST_BASE_TEXT_OVERLAY_LINE_ALIGN_CENTER: lines are center-aligned
  * @GST_BASE_TEXT_OVERLAY_LINE_ALIGN_RIGHT: lines are right-aligned
@@ -113,14 +113,14 @@ typedef enum {
     GST_BASE_TEXT_OVERLAY_LINE_ALIGN_LEFT = PANGO_ALIGN_LEFT,
     GST_BASE_TEXT_OVERLAY_LINE_ALIGN_CENTER = PANGO_ALIGN_CENTER,
     GST_BASE_TEXT_OVERLAY_LINE_ALIGN_RIGHT = PANGO_ALIGN_RIGHT
-} GstBaseTextOverlayLineAlign;
+} GstBaseUTextOverlayLineAlign;
 
 /**
- * GstBaseTextOverlayScaleMode:
+ * GstBaseUTextOverlayScaleMode:
  * @GST_BASE_TEXT_OVERLAY_SCALE_MODE_NONE: no compensation
  * @GST_BASE_TEXT_OVERLAY_SCALE_MODE_PAR: compensate pixel-aspect-ratio scaling
  * @GST_BASE_TEXT_OVERLAY_SCALE_MODE_DISPLAY: compensate for scaling to display (as determined by overlay allocation meta)
- * @GST_BASE_TEXT_OVERLAY_SCALE_MODE_USER: compensate scaling set by #GstBaseTextOverlay:scale-pixel-aspect-ratio property
+ * @GST_BASE_TEXT_OVERLAY_SCALE_MODE_USER: compensate scaling set by #GstBaseUTextOverlay:scale-pixel-aspect-ratio property
  *
  * Scale text to compensate for and avoid aspect distortion by subsequent
  * scaling of video
@@ -130,14 +130,14 @@ typedef enum {
     GST_BASE_TEXT_OVERLAY_SCALE_MODE_PAR,
     GST_BASE_TEXT_OVERLAY_SCALE_MODE_DISPLAY,
     GST_BASE_TEXT_OVERLAY_SCALE_MODE_USER
-} GstBaseTextOverlayScaleMode;
+} GstBaseUTextOverlayScaleMode;
 
 /**
- * GstBaseTextOverlay:
+ * GstBaseUTextOverlay:
  *
  * Opaque textoverlay object structure
  */
-struct _GstBaseTextOverlay {
+struct _GstBaseUTextOverlay {
     GstElement               element;
 
     GstPad                  *video_sinkpad;
@@ -183,11 +183,11 @@ struct _GstBaseTextOverlay {
     gboolean                 draw_outline;
     gint                     shading_value;  /* for timeoverlay subclass */
     gboolean                 use_vertical_render;
-    GstBaseTextOverlayVAlign     valign;
-    GstBaseTextOverlayHAlign     halign;
-    GstBaseTextOverlayWrapMode   wrap_mode;
-    GstBaseTextOverlayLineAlign  line_align;
-    GstBaseTextOverlayScaleMode  scale_mode;
+    GstBaseUTextOverlayVAlign     valign;
+    GstBaseUTextOverlayHAlign     halign;
+    GstBaseUTextOverlayWrapMode   wrap_mode;
+    GstBaseUTextOverlayLineAlign  line_align;
+    GstBaseUTextOverlayScaleMode  scale_mode;
     gint                     scale_par_n;
     gint                     scale_par_d;
 
@@ -229,13 +229,13 @@ struct _GstBaseTextOverlay {
     GstVideoOverlayComposition *upstream_composition;
 };
 
-struct _GstBaseTextOverlayClass {
+struct _GstBaseUTextOverlayClass {
     GstElementClass parent_class;
 
     PangoContext *pango_context;
     GMutex       *pango_lock;
 
-    gchar *     (*get_text) (GstBaseTextOverlay *overlay, GstBuffer *video_frame);
+    gchar *     (*get_text) (GstBaseUTextOverlay *overlay, GstBuffer *video_frame);
 };
 
 GType gst_base_text_overlay_get_type(void) G_GNUC_CONST;

@@ -46,13 +46,13 @@ typedef struct _GstUClockOverlayClass GstUClockOverlayClass;
  * Opaque clockoverlay data structure.
  */
 struct _GstUClockOverlay {
-  GstBaseTextOverlay textoverlay;
+  GstBaseUTextOverlay textoverlay;
   gchar         *format; /* as in strftime () */
   gchar         *text;
 };
 
 struct _GstUClockOverlayClass {
-  GstBaseTextOverlayClass parent_class;
+  GstBaseUTextOverlayClass parent_class;
 };
 
 GType gst_clock_overlay_get_type (void);

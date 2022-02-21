@@ -152,7 +152,7 @@ gst_base_text_overlay_valign_get_type (void)
 
   if (!base_text_overlay_valign_type) {
     base_text_overlay_valign_type =
-        g_enum_register_static ("GstBaseTextOverlayVAlign",
+        g_enum_register_static ("GstBaseUTextOverlayVAlign",
         base_text_overlay_valign);
   }
   return base_text_overlay_valign_type;
@@ -175,7 +175,7 @@ gst_base_text_overlay_halign_get_type (void)
 
   if (!base_text_overlay_halign_type) {
     base_text_overlay_halign_type =
-        g_enum_register_static ("GstBaseTextOverlayHAlign",
+        g_enum_register_static ("GstBaseUTextOverlayHAlign",
         base_text_overlay_halign);
   }
   return base_text_overlay_halign_type;
@@ -197,7 +197,7 @@ gst_base_text_overlay_wrap_mode_get_type (void)
 
   if (!base_text_overlay_wrap_mode_type) {
     base_text_overlay_wrap_mode_type =
-        g_enum_register_static ("GstBaseTextOverlayWrapMode",
+        g_enum_register_static ("GstBaseUTextOverlayWrapMode",
         base_text_overlay_wrap_mode);
   }
   return base_text_overlay_wrap_mode_type;
@@ -217,7 +217,7 @@ gst_base_text_overlay_line_align_get_type (void)
 
   if (!base_text_overlay_line_align_type) {
     base_text_overlay_line_align_type =
-        g_enum_register_static ("GstBaseTextOverlayLineAlign",
+        g_enum_register_static ("GstBaseUTextOverlayLineAlign",
         base_text_overlay_line_align);
   }
   return base_text_overlay_line_align_type;
@@ -238,7 +238,7 @@ gst_base_text_overlay_scale_mode_get_type (void)
 
   if (!base_text_overlay_scale_mode_type) {
     base_text_overlay_scale_mode_type =
-        g_enum_register_static ("GstBaseTextOverlayScaleMode",
+        g_enum_register_static ("GstBaseUTextOverlayScaleMode",
         base_text_overlay_scale_mode);
   }
   return base_text_overlay_scale_mode_type;
@@ -254,20 +254,20 @@ gst_base_text_overlay_scale_mode_get_type (void)
 
 static GstElementClass *parent_class = NULL;
 static void gst_base_text_overlay_base_init (gpointer g_class);
-static void gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass);
-static void gst_base_text_overlay_init (GstBaseTextOverlay * overlay,
-    GstBaseTextOverlayClass * klass);
+static void gst_base_text_overlay_class_init (GstBaseUTextOverlayClass * klass);
+static void gst_base_text_overlay_init (GstBaseUTextOverlay * overlay,
+    GstBaseUTextOverlayClass * klass);
 
 static GstStateChangeReturn gst_base_text_overlay_change_state (GstElement *
     element, GstStateChange transition);
 
 static GstCaps *gst_base_text_overlay_get_videosink_caps (GstPad * pad,
-    GstBaseTextOverlay * overlay, GstCaps * filter);
+    GstBaseUTextOverlay * overlay, GstCaps * filter);
 static GstCaps *gst_base_text_overlay_get_src_caps (GstPad * pad,
-    GstBaseTextOverlay * overlay, GstCaps * filter);
-static gboolean gst_base_text_overlay_setcaps (GstBaseTextOverlay * overlay,
+    GstBaseUTextOverlay * overlay, GstCaps * filter);
+static gboolean gst_base_text_overlay_setcaps (GstBaseUTextOverlay * overlay,
     GstCaps * caps);
-static gboolean gst_base_text_overlay_setcaps_txt (GstBaseTextOverlay * overlay,
+static gboolean gst_base_text_overlay_setcaps_txt (GstBaseUTextOverlay * overlay,
     GstCaps * caps);
 static gboolean gst_base_text_overlay_src_event (GstPad * pad,
     GstObject * parent, GstEvent * event);
@@ -289,7 +289,7 @@ static GstPadLinkReturn gst_base_text_overlay_text_pad_link (GstPad * pad,
     GstObject * parent, GstPad * peer);
 static void gst_base_text_overlay_text_pad_unlink (GstPad * pad,
     GstObject * parent);
-static void gst_base_text_overlay_pop_text (GstBaseTextOverlay * overlay);
+static void gst_base_text_overlay_pop_text (GstBaseUTextOverlay * overlay);
 
 static void gst_base_text_overlay_finalize (GObject * object);
 static void gst_base_text_overlay_set_property (GObject * object, guint prop_id,
@@ -298,12 +298,12 @@ static void gst_base_text_overlay_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
 static void
-gst_base_text_overlay_adjust_values_with_fontdesc (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_adjust_values_with_fontdesc (GstBaseUTextOverlay * overlay,
     PangoFontDescription * desc);
 static gboolean gst_base_text_overlay_can_handle_caps (GstCaps * incaps);
 
 static void
-gst_base_text_overlay_update_render_size (GstBaseTextOverlay * overlay);
+gst_base_text_overlay_update_render_size (GstBaseUTextOverlay * overlay);
 
 GType
 gst_base_text_overlay_get_type (void)
@@ -312,13 +312,13 @@ gst_base_text_overlay_get_type (void)
 
   if (g_once_init_enter ((gsize *) & type)) {
     static const GTypeInfo info = {
-      sizeof (GstBaseTextOverlayClass),
+      sizeof (GstBaseUTextOverlayClass),
       (GBaseInitFunc) gst_base_text_overlay_base_init,
       NULL,
       (GClassInitFunc) gst_base_text_overlay_class_init,
       NULL,
       NULL,
-      sizeof (GstBaseTextOverlay),
+      sizeof (GstBaseUTextOverlay),
       0,
       (GInstanceInitFunc) gst_base_text_overlay_init,
     };
@@ -332,7 +332,7 @@ gst_base_text_overlay_get_type (void)
 }
 
 static gchar *
-gst_base_text_overlay_get_text (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_get_text (GstBaseUTextOverlay * overlay,
     GstBuffer * video_frame)
 {
   return g_strdup (overlay->default_text);
@@ -341,7 +341,7 @@ gst_base_text_overlay_get_text (GstBaseTextOverlay * overlay,
 static void
 gst_base_text_overlay_base_init (gpointer g_class)
 {
-  GstBaseTextOverlayClass *klass = GST_BASE_TEXT_OVERLAY_CLASS (g_class);
+  GstBaseUTextOverlayClass *klass = GST_BASE_TEXT_OVERLAY_CLASS (g_class);
   PangoFontMap *fontmap;
 
   /* Only lock for the subclasses here, the base class
@@ -358,7 +358,7 @@ gst_base_text_overlay_base_init (gpointer g_class)
 }
 
 static void
-gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
+gst_base_text_overlay_class_init (GstBaseUTextOverlayClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -426,7 +426,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstBaseTextOverlay:text-x:
+   * GstBaseUTextOverlay:text-x:
    *
    * Resulting X position of font rendering.
    */
@@ -436,7 +436,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_MAXINT, DEFAULT_PROP_TEXT_X, G_PARAM_READABLE));
 
   /**
-   * GstBaseTextOverlay:text-y:
+   * GstBaseUTextOverlay:text-y:
    *
    * Resulting Y position of font rendering.
    */
@@ -446,7 +446,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_MAXINT, DEFAULT_PROP_TEXT_Y, G_PARAM_READABLE));
 
   /**
-   * GstBaseTextOverlay:text-width:
+   * GstBaseUTextOverlay:text-width:
    *
    * Resulting width of font rendering.
    */
@@ -456,7 +456,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           0, G_MAXINT, DEFAULT_PROP_TEXT_WIDTH, G_PARAM_READABLE));
 
   /**
-   * GstBaseTextOverlay:text-height:
+   * GstBaseUTextOverlay:text-height:
    *
    * Resulting height of font rendering.
    */
@@ -466,7 +466,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_MAXINT, DEFAULT_PROP_TEXT_HEIGHT, G_PARAM_READABLE));
 
   /**
-   * GstBaseTextOverlay:xpos:
+   * GstBaseUTextOverlay:xpos:
    *
    * Horizontal position of the rendered text when using positioned alignment.
    */
@@ -476,7 +476,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           DEFAULT_PROP_XPOS,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:ypos:
+   * GstBaseUTextOverlay:ypos:
    *
    * Vertical position of the rendered text when using positioned alignment.
    */
@@ -487,7 +487,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstBaseTextOverlay:x-absolute:
+   * GstBaseUTextOverlay:x-absolute:
    *
    * Horizontal position of the rendered text when using absolute alignment.
    *
@@ -507,7 +507,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_MAXDOUBLE, DEFAULT_PROP_XPOS,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:y-absolute:
+   * GstBaseUTextOverlay:y-absolute:
    *
    * See x-absolute.
    *
@@ -533,7 +533,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           "for syntax.", DEFAULT_PROP_FONT_DESC,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:color:
+   * GstBaseUTextOverlay:color:
    *
    * Color of the rendered text.
    */
@@ -554,7 +554,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstBaseTextOverlay:line-alignment:
+   * GstBaseUTextOverlay:line-alignment:
    *
    * Alignment of text lines relative to each other (for multi-line text)
    */
@@ -564,7 +564,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           GST_TYPE_BASE_TEXT_OVERLAY_LINE_ALIGN, DEFAULT_PROP_LINE_ALIGNMENT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:silent:
+   * GstBaseUTextOverlay:silent:
    *
    * If set, no text is rendered. Useful to switch off text rendering
    * temporarily without removing the textoverlay element from the pipeline.
@@ -576,7 +576,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           DEFAULT_PROP_SILENT,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:draw-shadow:
+   * GstBaseUTextOverlay:draw-shadow:
    *
    * If set, a text shadow is drawn.
    *
@@ -588,7 +588,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           DEFAULT_PROP_DRAW_SHADOW,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:draw-outline:
+   * GstBaseUTextOverlay:draw-outline:
    *
    * If set, an outline is drawn.
    *
@@ -600,7 +600,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           DEFAULT_PROP_DRAW_OUTLINE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstBaseTextOverlay:wait-text:
+   * GstBaseUTextOverlay:wait-text:
    *
    * If set, the video will block until a subtitle is received on the text pad.
    * If video and subtitles are sent in sync, like from the same demuxer, this
@@ -623,7 +623,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstBaseTextOverlay:scale-mode:
+   * GstBaseUTextOverlay:scale-mode:
    *
    * Scale text to compensate for and avoid distortion by subsequent video scaling
    *
@@ -636,7 +636,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstBaseTextOverlay:scale-pixel-aspect-ratio:
+   * GstBaseUTextOverlay:scale-pixel-aspect-ratio:
    *
    * Video scaling pixel-aspect-ratio to compensate for in user scale-mode.
    *
@@ -653,7 +653,7 @@ gst_base_text_overlay_class_init (GstBaseTextOverlayClass * klass)
 static void
 gst_base_text_overlay_finalize (GObject * object)
 {
-  GstBaseTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
+  GstBaseUTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
 
   g_free (overlay->default_text);
 
@@ -684,8 +684,8 @@ gst_base_text_overlay_finalize (GObject * object)
 }
 
 static void
-gst_base_text_overlay_init (GstBaseTextOverlay * overlay,
-    GstBaseTextOverlayClass * klass)
+gst_base_text_overlay_init (GstBaseUTextOverlay * overlay,
+    GstBaseUTextOverlayClass * klass)
 {
   GstPadTemplate *template;
   PangoFontDescription *desc;
@@ -802,7 +802,7 @@ gst_base_text_overlay_init (GstBaseTextOverlay * overlay,
 }
 
 static void
-gst_base_text_overlay_set_wrap_mode (GstBaseTextOverlay * overlay, gint width)
+gst_base_text_overlay_set_wrap_mode (GstBaseUTextOverlay * overlay, gint width)
 {
   if (overlay->wrap_mode == GST_BASE_TEXT_OVERLAY_WRAP_MODE_NONE) {
     GST_DEBUG_OBJECT (overlay, "Set wrap mode NONE");
@@ -819,7 +819,7 @@ gst_base_text_overlay_set_wrap_mode (GstBaseTextOverlay * overlay, gint width)
 }
 
 static gboolean
-gst_base_text_overlay_setcaps_txt (GstBaseTextOverlay * overlay, GstCaps * caps)
+gst_base_text_overlay_setcaps_txt (GstBaseUTextOverlay * overlay, GstCaps * caps)
 {
   GstStructure *structure;
   const gchar *format;
@@ -833,7 +833,7 @@ gst_base_text_overlay_setcaps_txt (GstBaseTextOverlay * overlay, GstCaps * caps)
 
 /* only negotiate/query video overlay composition support for now */
 static gboolean
-gst_base_text_overlay_negotiate (GstBaseTextOverlay * overlay, GstCaps * caps)
+gst_base_text_overlay_negotiate (GstBaseUTextOverlay * overlay, GstCaps * caps)
 {
   gboolean upstream_has_meta = FALSE;
   gboolean caps_has_meta = FALSE;
@@ -1003,7 +1003,7 @@ gst_base_text_overlay_can_handle_caps (GstCaps * incaps)
 }
 
 static gboolean
-gst_base_text_overlay_setcaps (GstBaseTextOverlay * overlay, GstCaps * caps)
+gst_base_text_overlay_setcaps (GstBaseUTextOverlay * overlay, GstCaps * caps)
 {
   GstVideoInfo info;
   gboolean ret = FALSE;
@@ -1046,7 +1046,7 @@ static void
 gst_base_text_overlay_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  GstBaseTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
+  GstBaseUTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
 
   GST_BASE_TEXT_OVERLAY_LOCK (overlay);
   switch (prop_id) {
@@ -1173,7 +1173,7 @@ static void
 gst_base_text_overlay_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  GstBaseTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
+  GstBaseUTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (object);
 
   GST_BASE_TEXT_OVERLAY_LOCK (overlay);
   switch (prop_id) {
@@ -1293,7 +1293,7 @@ gst_base_text_overlay_src_query (GstPad * pad, GstObject * parent,
     GstQuery * query)
 {
   gboolean ret = FALSE;
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlay *overlay;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
 
@@ -1318,7 +1318,7 @@ gst_base_text_overlay_src_query (GstPad * pad, GstObject * parent,
 }
 
 static void
-gst_base_text_overlay_update_render_size (GstBaseTextOverlay * overlay)
+gst_base_text_overlay_update_render_size (GstBaseUTextOverlay * overlay)
 {
   gdouble video_aspect = (gdouble) overlay->width / (gdouble) overlay->height;
   gdouble window_aspect = (gdouble) overlay->window_width /
@@ -1355,7 +1355,7 @@ static gboolean
 gst_base_text_overlay_src_event (GstPad * pad, GstObject * parent,
     GstEvent * event)
 {
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlay *overlay;
   gboolean ret;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
@@ -1454,7 +1454,7 @@ gst_base_text_overlay_intersect_by_feature (GstCaps * caps,
 
 static GstCaps *
 gst_base_text_overlay_get_videosink_caps (GstPad * pad,
-    GstBaseTextOverlay * overlay, GstCaps * filter)
+    GstBaseUTextOverlay * overlay, GstCaps * filter)
 {
   GstPad *srcpad = overlay->srcpad;
   GstCaps *peer_caps = NULL, *caps = NULL, *overlay_filter = NULL;
@@ -1516,7 +1516,7 @@ gst_base_text_overlay_get_videosink_caps (GstPad * pad,
 }
 
 static GstCaps *
-gst_base_text_overlay_get_src_caps (GstPad * pad, GstBaseTextOverlay * overlay,
+gst_base_text_overlay_get_src_caps (GstPad * pad, GstBaseUTextOverlay * overlay,
     GstCaps * filter)
 {
   GstPad *sinkpad = overlay->video_sinkpad;
@@ -1581,7 +1581,7 @@ gst_base_text_overlay_get_src_caps (GstPad * pad, GstBaseTextOverlay * overlay,
 }
 
 static void
-gst_base_text_overlay_adjust_values_with_fontdesc (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_adjust_values_with_fontdesc (GstBaseUTextOverlay * overlay,
     PangoFontDescription * desc)
 {
   gint font_size = pango_font_description_get_size (desc) / PANGO_SCALE;
@@ -1592,7 +1592,7 @@ gst_base_text_overlay_adjust_values_with_fontdesc (GstBaseTextOverlay * overlay,
 }
 
 static void
-gst_base_text_overlay_get_pos (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_get_pos (GstBaseUTextOverlay * overlay,
     gint * xpos, gint * ypos)
 {
   gint width, height;
@@ -1666,7 +1666,7 @@ gst_base_text_overlay_get_pos (GstBaseTextOverlay * overlay,
 }
 
 static inline void
-gst_base_text_overlay_set_composition (GstBaseTextOverlay * overlay)
+gst_base_text_overlay_set_composition (GstBaseUTextOverlay * overlay)
 {
   gint xpos, ypos;
   GstVideoOverlayRectangle *rectangle;
@@ -1732,7 +1732,7 @@ gst_text_overlay_filter_foreground_attr (PangoAttribute * attr, gpointer data)
 }
 
 static void
-gst_base_text_overlay_render_pangocairo (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_render_pangocairo (GstBaseUTextOverlay * overlay,
     const gchar * string, gint textlen)
 {
   cairo_t *cr;
@@ -2058,7 +2058,7 @@ gst_base_text_overlay_render_pangocairo (GstBaseTextOverlay * overlay,
 }
 
 static inline void
-gst_base_text_overlay_shade_planar_Y (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_planar_Y (GstBaseUTextOverlay * overlay,
     GstVideoFrame * dest, gint x0, gint x1, gint y0, gint y1)
 {
   gint i, j, dest_stride;
@@ -2077,7 +2077,7 @@ gst_base_text_overlay_shade_planar_Y (GstBaseTextOverlay * overlay,
 }
 
 static inline void
-gst_base_text_overlay_shade_packed_Y (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_packed_Y (GstBaseUTextOverlay * overlay,
     GstVideoFrame * dest, gint x0, gint x1, gint y0, gint y1)
 {
   gint i, j;
@@ -2115,7 +2115,7 @@ gst_base_text_overlay_shade_packed_Y (GstBaseTextOverlay * overlay,
 #define gst_base_text_overlay_shade_RGBx gst_base_text_overlay_shade_xRGB
 #define gst_base_text_overlay_shade_xBGR gst_base_text_overlay_shade_xRGB
 static inline void
-gst_base_text_overlay_shade_xRGB (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_xRGB (GstBaseUTextOverlay * overlay,
     GstVideoFrame * dest, gint x0, gint x1, gint y0, gint y1)
 {
   gint i, j;
@@ -2138,7 +2138,7 @@ gst_base_text_overlay_shade_xRGB (GstBaseTextOverlay * overlay,
 
 /* FIXME: orcify */
 static void
-gst_base_text_overlay_shade_rgb24 (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_rgb24 (GstBaseUTextOverlay * overlay,
     GstVideoFrame * frame, gint x0, gint x1, gint y0, gint y1)
 {
   const int pstride = 3;
@@ -2163,7 +2163,7 @@ gst_base_text_overlay_shade_rgb24 (GstBaseTextOverlay * overlay,
 }
 
 static void
-gst_base_text_overlay_shade_IYU1 (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_IYU1 (GstBaseUTextOverlay * overlay,
     GstVideoFrame * frame, gint x0, gint x1, gint y0, gint y1)
 {
   gint y, x, stride, shading_val, tmp;
@@ -2192,7 +2192,7 @@ gst_base_text_overlay_shade_IYU1 (GstBaseTextOverlay * overlay,
 
 #define ARGB_SHADE_FUNCTION(name, OFFSET)	\
 static inline void \
-gst_base_text_overlay_shade_##name (GstBaseTextOverlay * overlay, GstVideoFrame * dest, \
+gst_base_text_overlay_shade_##name (GstBaseUTextOverlay * overlay, GstVideoFrame * dest, \
 gint x0, gint x1, gint y0, gint y1) \
 { \
   gint i, j;\
@@ -2217,7 +2217,7 @@ ARGB_SHADE_FUNCTION (RGBA, 0);
 ARGB_SHADE_FUNCTION (BGRA, 0);
 
 static void
-gst_base_text_overlay_render_text (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_render_text (GstBaseUTextOverlay * overlay,
     const gchar * text, gint textlen)
 {
   gchar *string;
@@ -2255,7 +2255,7 @@ gst_base_text_overlay_render_text (GstBaseTextOverlay * overlay,
 #define BOX_YPAD  6
 
 static void
-gst_base_text_overlay_shade_background (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_shade_background (GstBaseUTextOverlay * overlay,
     GstVideoFrame * frame, gint x0, gint x1, gint y0, gint y1)
 {
   x0 = CLAMP (x0 - BOX_XPAD, 0, overlay->width);
@@ -2325,7 +2325,7 @@ gst_base_text_overlay_shade_background (GstBaseTextOverlay * overlay,
 }
 
 static GstFlowReturn
-gst_base_text_overlay_push_frame (GstBaseTextOverlay * overlay,
+gst_base_text_overlay_push_frame (GstBaseUTextOverlay * overlay,
     GstBuffer * video_frame)
 {
   GstVideoFrame frame;
@@ -2389,7 +2389,7 @@ static GstPadLinkReturn
 gst_base_text_overlay_text_pad_link (GstPad * pad, GstObject * parent,
     GstPad * peer)
 {
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlay *overlay;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
   if (G_UNLIKELY (!overlay))
@@ -2405,7 +2405,7 @@ gst_base_text_overlay_text_pad_link (GstPad * pad, GstObject * parent,
 static void
 gst_base_text_overlay_text_pad_unlink (GstPad * pad, GstObject * parent)
 {
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlay *overlay;
 
   /* don't use gst_pad_get_parent() here, will deadlock */
   overlay = GST_BASE_TEXT_OVERLAY (parent);
@@ -2422,7 +2422,7 @@ gst_base_text_overlay_text_event (GstPad * pad, GstObject * parent,
     GstEvent * event)
 {
   gboolean ret = FALSE;
-  GstBaseTextOverlay *overlay = NULL;
+  GstBaseUTextOverlay *overlay = NULL;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
 
@@ -2532,7 +2532,7 @@ gst_base_text_overlay_video_event (GstPad * pad, GstObject * parent,
     GstEvent * event)
 {
   gboolean ret = FALSE;
-  GstBaseTextOverlay *overlay = NULL;
+  GstBaseUTextOverlay *overlay = NULL;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
 
@@ -2605,7 +2605,7 @@ gst_base_text_overlay_video_query (GstPad * pad, GstObject * parent,
     GstQuery * query)
 {
   gboolean ret = FALSE;
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlay *overlay;
 
   overlay = GST_BASE_TEXT_OVERLAY (parent);
 
@@ -2631,7 +2631,7 @@ gst_base_text_overlay_video_query (GstPad * pad, GstObject * parent,
 
 /* Called with lock held */
 static void
-gst_base_text_overlay_pop_text (GstBaseTextOverlay * overlay)
+gst_base_text_overlay_pop_text (GstBaseUTextOverlay * overlay)
 {
   g_return_if_fail (GST_IS_BASE_TEXT_OVERLAY (overlay));
 
@@ -2654,7 +2654,7 @@ gst_base_text_overlay_text_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer)
 {
   GstFlowReturn ret = GST_FLOW_OK;
-  GstBaseTextOverlay *overlay = NULL;
+  GstBaseUTextOverlay *overlay = NULL;
   gboolean in_seg = FALSE;
   guint64 clip_start = 0, clip_stop = 0;
 
@@ -2743,8 +2743,8 @@ static GstFlowReturn
 gst_base_text_overlay_video_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer)
 {
-  GstBaseTextOverlayClass *klass;
-  GstBaseTextOverlay *overlay;
+  GstBaseUTextOverlayClass *klass;
+  GstBaseUTextOverlay *overlay;
   GstFlowReturn ret = GST_FLOW_OK;
   gboolean in_seg = FALSE;
   guint64 start, stop, clip_start = 0, clip_stop = 0;
@@ -3071,7 +3071,7 @@ gst_base_text_overlay_change_state (GstElement * element,
     GstStateChange transition)
 {
   GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
-  GstBaseTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (element);
+  GstBaseUTextOverlay *overlay = GST_BASE_TEXT_OVERLAY (element);
 
   switch (transition) {
     case GST_STATE_CHANGE_PAUSED_TO_READY:

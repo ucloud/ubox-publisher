@@ -21,11 +21,11 @@
 /**
  * SECTION:element-clockoverlay
  * @title: clockoverlay
- * @see_also: #GstBaseTextOverlay, #GstTimeOverlay
+ * @see_also: #GstBaseUTextOverlay, #GstTimeOverlay
  *
  * This element overlays the current clock time on top of a video
  * stream. You can position the text and configure the font details
- * using the properties of the #GstBaseTextOverlay class. By default, the
+ * using the properties of the #GstBaseUTextOverlay class. By default, the
  * time is displayed in the top left corner of the picture, with some
  * padding to the left and to the top.
  *
@@ -107,7 +107,7 @@ gst_clock_overlay_render_time (GstUClockOverlay * overlay)
 
 /* Called with lock held */
 static gchar *
-gst_clock_overlay_get_text (GstBaseTextOverlay * overlay,
+gst_clock_overlay_get_text (GstBaseUTextOverlay * overlay,
     GstBuffer * video_frame)
 {
   gchar *time_str, *txt, *ret;
@@ -140,13 +140,13 @@ gst_clock_overlay_class_init (GstUClockOverlayClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
-  GstBaseTextOverlayClass *gsttextoverlay_class;
+  GstBaseUTextOverlayClass *gsttextoverlay_class;
   PangoContext *context;
   PangoFontDescription *font_description;
 
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
-  gsttextoverlay_class = (GstBaseTextOverlayClass *) klass;
+  gsttextoverlay_class = (GstBaseUTextOverlayClass *) klass;
 
   gobject_class->finalize = gst_clock_overlay_finalize;
   gobject_class->set_property = gst_clock_overlay_set_property;
@@ -199,7 +199,7 @@ gst_clock_overlay_finalize (GObject * object)
 static void
 gst_clock_overlay_init (GstUClockOverlay * overlay)
 {
-  GstBaseTextOverlay *textoverlay;
+  GstBaseUTextOverlay *textoverlay;
 
   textoverlay = GST_BASE_TEXT_OVERLAY (overlay);
 
