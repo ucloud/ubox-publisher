@@ -10,7 +10,7 @@ add_subdirectory(uflv)
 add_subdirectory(test)
 
 execute_process(
-    COMMAND bash -c "git describe --tags 2> /dev/null || echo `git rev-parse --short HEAD`"
+    COMMAND bash -c "cd ${CMAKE_SOURCE_DIR} && git describe --tags 2> /dev/null || echo `git rev-parse --short HEAD`"
     OUTPUT_VARIABLE PROJECT_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )

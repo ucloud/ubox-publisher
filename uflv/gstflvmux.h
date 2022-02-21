@@ -30,28 +30,28 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_FLV_MUX_PAD (gst_flv_mux_pad_get_type())
-#define GST_FLV_MUX_PAD(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_FLV_MUX_PAD, GstFlvMuxPad))
-#define GST_FLV_MUX_PAD_CAST(obj) ((GstFlvMuxPad *)(obj))
-#define GST_FLV_MUX_PAD_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_FLV_MUX_PAD, GstFlvMuxPad))
+#define GST_FLV_MUX_PAD(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_FLV_MUX_PAD, GstUFlvMuxPad))
+#define GST_FLV_MUX_PAD_CAST(obj) ((GstUFlvMuxPad *)(obj))
+#define GST_FLV_MUX_PAD_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_FLV_MUX_PAD, GstUFlvMuxPad))
 #define GST_IS_FLV_MUX_PAD(obj) (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_FLV_MUX_PAD))
 #define GST_IS_FLV_MUX_PAD_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_FLV_MUX_PAD))
 
-typedef struct _GstFlvMuxPad GstFlvMuxPad;
-typedef struct _GstFlvMuxPadClass GstFlvMuxPadClass;
+typedef struct _GstUFlvMuxPad GstUFlvMuxPad;
+typedef struct _GstUFlvMuxPadClass GstUFlvMuxPadClass;
 
 #define GST_TYPE_FLV_MUX \
   (gst_flv_mux_get_type ())
 #define GST_FLV_MUX(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_FLV_MUX, GstFlvMux))
-#define GST_FLV_MUX_CAST(obj) ((GstFlvMux *)obj)
+  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_FLV_MUX, GstUFlvMux))
+#define GST_FLV_MUX_CAST(obj) ((GstUFlvMux *)obj)
 #define GST_FLV_MUX_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_FLV_MUX, GstFlvMuxClass))
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_FLV_MUX, GstUFlvMuxClass))
 #define GST_IS_FLV_MUX(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_FLV_MUX))
 #define GST_IS_FLV_MUX_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_FLV_MUX))
 
-struct _GstFlvMuxPad
+struct _GstUFlvMuxPad
 {
   GstAggregatorPad aggregator_pad;
 
@@ -68,25 +68,25 @@ struct _GstFlvMuxPad
   gint64 dts;
 };
 
-typedef struct _GstFlvMuxPadClass {
+typedef struct _GstUFlvMuxPadClass {
   GstAggregatorPadClass parent;
-} GstFlvMuxPadClass;
+} GstUFlvMuxPadClass;
 
 typedef enum
 {
   GST_FLV_MUX_STATE_HEADER,
   GST_FLV_MUX_STATE_DATA
-} GstFlvMuxState;
+} GstUFlvMuxState;
 
-typedef struct _GstFlvMux {
+typedef struct _GstUFlvMux {
   GstAggregator   aggregator;
 
   GstPad         *srcpad;
 
   /* <private> */
-  GstFlvMuxState state;
-  GstFlvMuxPad *audio_pad;
-  GstFlvMuxPad *video_pad;
+  GstUFlvMuxState state;
+  GstUFlvMuxPad *audio_pad;
+  GstUFlvMuxPad *video_pad;
   gboolean streamable;
   gchar *metadatacreator;
 
@@ -97,11 +97,11 @@ typedef struct _GstFlvMux {
   guint64 duration;
   gint64 first_timestamp;
   GstClockTime last_dts;
-} GstFlvMux;
+} GstUFlvMux;
 
-typedef struct _GstFlvMuxClass {
+typedef struct _GstUFlvMuxClass {
   GstAggregatorClass parent;
-} GstFlvMuxClass;
+} GstUFlvMuxClass;
 
 GType    gst_flv_mux_pad_get_type(void);
 GType    gst_flv_mux_get_type    (void);
