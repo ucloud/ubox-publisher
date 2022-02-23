@@ -23,7 +23,7 @@ MediaStream::MediaStream() {
   mOpened = false;
   mEnd = false;
   mFinish = false;
-  mLimitFPS = 0;
+  mInputFPS = 0;
   mAccel = accelNone;
 }
 
@@ -57,7 +57,7 @@ int MediaStream::setAccel() {
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight, bool copy,
-                      int dstWidth, int dstHeight, int fps, int limitfps,
+                      int dstWidth, int dstHeight, int fps, int inputfps,
                       int bitrate, const char *url) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
@@ -89,12 +89,14 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mDstWidth = dstWidth;
   mDstHeight = dstHeight;
   mFps = fps;
-  mLimitFPS = limitfps;
+  mInputFPS = inputfps;
+  if (mInputFPS == 0)
+      mInputFPS = 60;
   mBitrate = bitrate;
   mUrl = url;
 
-  tlog(TLOG_INFO, "input=%s,accel=%s,fps=%d,limitfps=%d", mInputType.c_str(),
-       mAccel.c_str(), mFps, mLimitFPS);
+  tlog(TLOG_INFO, "input=%s,accel=%s,fps=%d,inputfps=%d", mInputType.c_str(),
+       mAccel.c_str(), mFps, mInputFPS);
 
   mQuit = false;
   mRestart = true;
@@ -106,12 +108,10 @@ int MediaStream::Close() {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   mQuit = true;
   if (!mEnd) {
-    gst_element_set_state(mPipeline, GST_STATE_NULL);
     try {
       mStreamThread.join();
     } catch (...) {
-      tlog(TLOG_INFO, "catch stream thread error!");
-      tlog(TLOG_INFO, "stream thread quit!");
+      tlog(TLOG_INFO, "catch stream thread error! stream thread quit!");
       mOpened = false;
       lock.unlock();
       return 0;
@@ -156,11 +156,11 @@ void MediaStream::addSource() {
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
-                 "height", mSrcHeight, "fps", mFps, NULL);
+                 "height", mSrcHeight, "fps", mInputFPS, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
-                 mSrcHeight, "fps", mFps, NULL);
+                 mSrcHeight, "fps", mInputFPS, NULL);
     if (mAccel != "jetson") { // buggy jetson camera
       g_object_set(e, "change", 1, NULL);
     }
@@ -183,7 +183,7 @@ void MediaStream::addFilterFramerate() {
   GstElement *e = gst_element_factory_make("capsfilter", "filter_framerate");
   GstCaps *caps;
   caps = gst_caps_new_simple("video/x-raw", "framerate", GST_TYPE_FRACTION,
-                             mLimitFPS, 1, NULL);
+                             mFps, 1, NULL);
   g_object_set(e, "caps", caps, NULL);
   gst_caps_unref(caps);
   mElements.push_back(e);
@@ -241,20 +241,20 @@ void MediaStream::addEncoder() {
   GstElement *e;
   if (mAccel == accelIntel) {
     e = gst_element_factory_make("vaapih264enc", "encoder");
-    g_object_set(e, "quality-level", 1, "cpb-length", 500, "rate-control", 4,
+    g_object_set(e, "quality-level", 1, "cpb-length", 1000, "rate-control", 4/*vbr*/,
                  "keyframe-period", 10,
-                 NULL); // constant
+                 NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
     e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-    g_object_set(e, "vbv-size", 1000000, "profile", 4 /*high*/,
-                 "iframeinterval", 10, "control-rate", 1, "maxperf-enable", 1,
+    g_object_set(e, "vbv-size", 1000000, "profile", 4/*High*/,
+                 "iframeinterval", 10, "control-rate", 1/*constant_bitrate*/, "maxperf-enable", 1,
                  "bitrate", mBitrate * 1000, NULL);
   } else {
     e = gst_element_factory_make("x264enc", "encoder");
-    g_object_set(e, "key-int-max", 10, "tune", 4, "speed-preset", 3,
-                 "vbv-buf-capacity", 100,
-                 NULL); // lowlatency,veryfast
+    g_object_set(e, "key-int-max", 10, "tune", 4/*zerolatency*/, "speed-preset", 1/*ultrafast*/,
+                 "vbv-buf-capacity", 300,
+                 NULL);
     setBitrate(e, mBitrate);
   }
   mElements.push_back(e);
@@ -297,8 +297,8 @@ int MediaStream::setupPipeline() {
     addDepay();
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
-    addClock();
-    if (mLimitFPS > 0) {
+    //addClock();
+    if (mFps > 0) {
       addVideoRate();
       addFilterFramerate();
     }
@@ -411,7 +411,7 @@ void MediaStream::run() {
 
   do {
     GstMessage *msg = gst_bus_timed_pop_filtered(
-        bus, GST_CLOCK_TIME_NONE,
+        bus, 200 * GST_MSECOND,
         (GstMessageType)(GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR |
                          GST_MESSAGE_EOS));
 

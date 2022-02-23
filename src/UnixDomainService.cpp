@@ -200,7 +200,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   cJSON *jsonDstHeight = cJSON_GetObjectItem(jsonRequest, "DstHeight");
   cJSON *jsonURL = cJSON_GetObjectItem(jsonRequest, "URL");
   cJSON *jsonFPS = cJSON_GetObjectItem(jsonRequest, "FPS");
-  cJSON *jsonLimitFPS = cJSON_GetObjectItem(jsonRequest, "LimitFPS");
+  cJSON *jsonInputFPS = cJSON_GetObjectItem(jsonRequest, "InputFPS");
   cJSON *jsonBitrate = cJSON_GetObjectItem(jsonRequest, "Bitrate");
 
   std::string inputType, accel;
@@ -210,7 +210,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   int dstWidth = 640;
   int dstHeight = 480;
   int fps = 24;
-  int limitfps = 0;
+  int inputfps = 0;
   int bitrate = 1000;
 
   if (jsonInputType && !cJSON_IsString(jsonInputType)) {
@@ -255,9 +255,9 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
     if (jsonFPS->valueint > 0)
       fps = jsonFPS->valueint;
   }
-  if (cJSON_IsNumber(jsonLimitFPS)) {
-    if (jsonLimitFPS->valueint > 0)
-      limitfps = jsonLimitFPS->valueint;
+  if (cJSON_IsNumber(jsonInputFPS)) {
+    if (jsonInputFPS->valueint > 0)
+      inputfps = jsonInputFPS->valueint;
   }
   if (cJSON_IsNumber(jsonBitrate)) {
     if (jsonBitrate->valueint > 0)
@@ -267,13 +267,13 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   tlog(TLOG_INFO,
        "start stream, inputType(%s), device(%s), accel(%s), srcWidth(%d), "
        "srcHeight(%d), copy(%d), "
-       "dstWidth(%d), dstHeight(%d), fps(%d), limitfps(%d), bitrate(%d), URL(%s)",
+       "dstWidth(%d), dstHeight(%d), fps(%d), inputfps(%d), bitrate(%d), URL(%s)",
        inputType.c_str(), jsonDevice->valuestring, accel.c_str(), srcWidth,
-       srcHeight, copy, dstWidth, dstHeight, fps, limitfps, bitrate,
+       srcHeight, copy, dstWidth, dstHeight, fps, inputfps, bitrate,
        jsonURL->valuestring);
   int ret = handler.StartStream(
       inputType.c_str(), (const char *)jsonDevice->valuestring, accel.c_str(),
-      srcWidth, srcHeight, copy, dstWidth, dstHeight, fps, limitfps, bitrate,
+      srcWidth, srcHeight, copy, dstWidth, dstHeight, fps, inputfps, bitrate,
       (const char *)jsonURL->valuestring);
   if (ret != 0) {
     tlog(TLOG_ERROR, "start stream failed. ret=%d", ret);

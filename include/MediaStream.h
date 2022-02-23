@@ -17,7 +17,7 @@ public:
     ~MediaStream();
 
     int Open(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
-            bool copy, int dstWidth, int dstHeight, int fps, int limitfps, int bitrate, const char *url);
+            bool copy, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
     int Close();
 
     void SetBitrate(int bitrate);
@@ -63,7 +63,7 @@ private:
     int mSrcHeight;
     bool mStreamCopy;
     int mFps;
-    int mLimitFPS;
+    int mInputFPS;
     int mDstWidth;
     int mDstHeight;
     int mBitrate;

@@ -33,14 +33,14 @@ int main(int argc, char *argv[]) {
   int width = 0;
   int height = 0;
   int fps = 0;
-  int limitfps = 0;
+  int inputfps = 0;
   int bitrate = 2000;
   bool copy = false;
   bool verbose = false;
   signed char ch;
   std::string type, accelPlatform;
 
-  if (argc < 2) {
+  if (argc < 2 || strcmp(argv[1], "-h") == 0) {
     showUsage();
   }
   while ((ch = getopt(argc, argv, "u:t:s:d:a:w:h:f:F:b:p:cv")) != -1) {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
       fps = atoi(optarg);
       break;
     case 'F':
-      limitfps = atoi(optarg);
+      inputfps = atoi(optarg);
       break;
     case 'b':
       bitrate = atoi(optarg);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     tlog(TLOG_INFO, "(device) %s, (accel) %s, (url) %s\n", deviceName.c_str(),
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
-                        width, height, copy, 640, 480, fps, limitfps, bitrate,
+                        width, height, copy, 640, 480, fps, inputfps, bitrate,
                         url.c_str());
   }
 
