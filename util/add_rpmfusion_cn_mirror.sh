@@ -22,13 +22,12 @@ add_rpmfusion_withmirror() {
 exists=$(yum repolist | grep -E '^rpmfusion-' | wc -l )
 if [[ $exists -gt 0 ]]; then
     echo "rpmfusion repo already exists, will overwrite!"
-
-    # only support centos version from 6 to 8
-    centos_ver=$(cat /etc/os-release | grep -E '^VERSION_ID' | awk -F'=' '{print $2}' | sed 's/"//g')
-    if [[ $centos_ver -eq 6 ]] || [[ $centos_ver -eq 7 ]] || [[ $centos_ver -eq 8 ]]; then
-        add_rpmfusion_withmirror $centos_ver
-    else
-        echo "unknown centos version: $centos_ver"
-        exit 1
-    fi
+fi
+# only support centos version from 6 to 8
+centos_ver=$(cat /etc/os-release | grep -E '^VERSION_ID' | awk -F'=' '{print $2}' | sed 's/"//g')
+if [[ $centos_ver -eq 6 ]] || [[ $centos_ver -eq 7 ]] || [[ $centos_ver -eq 8 ]]; then
+    add_rpmfusion_withmirror $centos_ver
+else
+    echo "unknown centos version: $centos_ver"
+    exit 1
 fi
