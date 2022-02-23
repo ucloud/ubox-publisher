@@ -37,9 +37,9 @@ set(CPACK_SYSTEM_NAME                       "${ARCH}")
 set(CPACK_PACKAGE_CONTACT                   "Faicker Mo <faicker.mo@ucloud.cn>")
 
 if (${LINUXOS} STREQUAL "centos") #centos 7/8
-    SET(RTMPVERSION "2.4-16.el8")
+    SET(RTMPVERSION "2.4-18_uc.el8")
     if (${LINUXOSVERSION} STREQUAL "7")
-        SET(RTMPVERSION "2.4-16.el7")
+        SET(RTMPVERSION "2.4-18_uc.el7")
     endif ()
 
     SET(CPACK_GENERATOR                         "RPM")
