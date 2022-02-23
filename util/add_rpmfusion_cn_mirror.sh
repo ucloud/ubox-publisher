@@ -8,7 +8,7 @@ add_rpmfusion_withmirror() {
     rm -f rpmfusion-nonfree-updates.repo
     rm -f rpmfusion-nonfree-updates-testing.repo
 
-	yum -y install --nogpgcheck https://mirrors.tuna.tsinghua.edu.cn/rpmfusion/free/el/rpmfusion-free-release-${centos_ver}.noarch.rpm https://mirrors.tuna.tsinghua.edu.cn/rpmfusion/nonfree/el/rpmfusion-nonfree-release-${centos_ver}.noarch.rpm
+    yum -y install --nogpgcheck https://mirrors.tuna.tsinghua.edu.cn/rpmfusion/free/el/rpmfusion-free-release-${centos_ver}.noarch.rpm https://mirrors.tuna.tsinghua.edu.cn/rpmfusion/nonfree/el/rpmfusion-nonfree-release-${centos_ver}.noarch.rpm
 
     for repofile in rpmfusion-free-updates.repo rpmfusion-free-updates-testing.repo rpmfusion-nonfree-updates.repo rpmfusion-nonfree-updates-testing.repo
     do
