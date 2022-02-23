@@ -63,7 +63,7 @@ ubox-publisher -u @/tmp/publisher.sock
 setup epel repo and rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_rpmfusion_cn_mirror.sh)
 
 ```bash
-yum install glib2 pango-devel cairo-devel gstreamer1-devel gstreamer1-plugins-base-devel \ 
+dnf install glib2 pango-devel cairo-devel gstreamer1-devel gstreamer1-plugins-base-devel \ 
     gstreamer1 gstreamer1-libav gstreamer1-vaapi gstreamer1-plugins-base gstreamer1-plugins-bad-free \
     gstreamer1-plugins-good gstreamer1-plugins-ugly gstreamer1-plugins-ugly-free \
     libva-intel-driver gstreamer1-plugins-bad-freeworld
