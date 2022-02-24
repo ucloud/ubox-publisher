@@ -6,7 +6,6 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/wrhcamerasrc/CMakeLists.txt)
 endif ()
 add_subdirectory(uv4l2src)
 add_subdirectory(uclockoverlay)
-add_subdirectory(uflv)
 add_subdirectory(test)
 
 execute_process(
@@ -30,6 +29,10 @@ execute_process(
     OUTPUT_VARIABLE LINUXOSVERSION
     )
 
+if (${LINUXOS} STREQUAL "centos" AND ${LINUXOSVERSION} STREQUAL "8")
+    add_subdirectory(uflv)
+endif ()
+
 set(CPACK_PACKAGE_NAME                      "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION                   "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY       "ubox-publisher")
@@ -37,9 +40,9 @@ set(CPACK_SYSTEM_NAME                       "${ARCH}")
 set(CPACK_PACKAGE_CONTACT                   "Faicker Mo <faicker.mo@ucloud.cn>")
 
 if (${LINUXOS} STREQUAL "centos") #centos 7/8
-    SET(RTMPVERSION "2.4-18_uc.el8")
+    SET(RTMPVERSION "2.4-19_uc.el8")
     if (${LINUXOSVERSION} STREQUAL "7")
-        SET(RTMPVERSION "2.4-18_uc.el7")
+        SET(RTMPVERSION "2.4-19_uc.el7")
     endif ()
 
     SET(CPACK_GENERATOR                         "RPM")
@@ -52,7 +55,7 @@ if (${LINUXOS} STREQUAL "centos") #centos 7/8
 else()
     set(CPACK_GENERATOR "DEB")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgstreamer1.0-0, libglib2.0-0, libpango-1.0-0, gstreamer1.0-plugins-ugly, gstreamer1.0-plugins-good, gstreamer1.0-plugins-base, gstreamer1.0-plugins-bad, gstreamer1.0-tools, gstreamer1.0-rtsp, gstreamer1.0-vaapi, gstreamer1.0-libav, librtmp1 (=2.4+20151223.gitfa8646d.1-2)")  #ubuntu 18.04/20.04
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgstreamer1.0-0, libglib2.0-0, libpango-1.0-0, gstreamer1.0-plugins-ugly, gstreamer1.0-plugins-good, gstreamer1.0-plugins-base, gstreamer1.0-plugins-bad, gstreamer1.0-tools, gstreamer1.0-rtsp, gstreamer1.0-vaapi, gstreamer1.0-libav, librtmp1 (=2.4+20151223.gitfa8646d.2.uc-1)")  #ubuntu 18.04/20.04
 endif ()
 
 include(CPack)
