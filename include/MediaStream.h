@@ -17,7 +17,7 @@ public:
     ~MediaStream();
 
     int Open(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
-            bool copy, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
+            bool hevcEncode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
     int Close();
 
     void SetBitrate(int bitrate);
@@ -33,6 +33,7 @@ private:
     void addDepay();
     void addDecoder();
     void addVideoConvert();
+    void addNVConv();
     void addScale();
     void addFilterScale();
     void addEncoder();
@@ -61,7 +62,8 @@ private:
     std::string mUrl;
     int mSrcWidth;
     int mSrcHeight;
-    bool mStreamCopy;
+    bool mHevcEncode;
+    bool mAddClock;
     int mFps;
     int mInputFPS;
     int mDstWidth;

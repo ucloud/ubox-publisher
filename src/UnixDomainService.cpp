@@ -195,7 +195,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   cJSON *jsonAccel = cJSON_GetObjectItem(jsonRequest, "Accel");
   cJSON *jsonSrcWidth = cJSON_GetObjectItem(jsonRequest, "SrcWidth");
   cJSON *jsonSrcHeight = cJSON_GetObjectItem(jsonRequest, "SrcHeight");
-  cJSON *jsonStreamCopy = cJSON_GetObjectItem(jsonRequest, "StreamCopy");
+  cJSON *jsonStreamCopy = cJSON_GetObjectItem(jsonRequest, "HevcEncode");
   cJSON *jsonDstWidth = cJSON_GetObjectItem(jsonRequest, "DstWidth");
   cJSON *jsonDstHeight = cJSON_GetObjectItem(jsonRequest, "DstHeight");
   cJSON *jsonURL = cJSON_GetObjectItem(jsonRequest, "URL");
@@ -206,7 +206,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   std::string inputType, accel;
   int srcWidth = 1280;
   int srcHeight = 720;
-  bool copy = false;
+  bool hevcEncode = false;
   int dstWidth = 640;
   int dstHeight = 480;
   int fps = 24;
@@ -241,7 +241,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
       srcHeight = jsonSrcHeight->valueint;
   }
   if (cJSON_IsTrue(jsonStreamCopy)) {
-    copy = true;
+    hevcEncode = true;
   }
   if (cJSON_IsNumber(jsonDstWidth)) {
     if (jsonDstWidth->valueint > 0)
@@ -266,14 +266,14 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
 
   tlog(TLOG_INFO,
        "start stream, inputType(%s), device(%s), accel(%s), srcWidth(%d), "
-       "srcHeight(%d), copy(%d), "
+       "srcHeight(%d), hevcEncode(%d), "
        "dstWidth(%d), dstHeight(%d), fps(%d), inputfps(%d), bitrate(%d), URL(%s)",
        inputType.c_str(), jsonDevice->valuestring, accel.c_str(), srcWidth,
-       srcHeight, copy, dstWidth, dstHeight, fps, inputfps, bitrate,
+       srcHeight, hevcEncode, dstWidth, dstHeight, fps, inputfps, bitrate,
        jsonURL->valuestring);
   int ret = handler.StartStream(
       inputType.c_str(), (const char *)jsonDevice->valuestring, accel.c_str(),
-      srcWidth, srcHeight, copy, dstWidth, dstHeight, fps, inputfps, bitrate,
+      srcWidth, srcHeight, hevcEncode, dstWidth, dstHeight, fps, inputfps, bitrate,
       (const char *)jsonURL->valuestring);
   if (ret != 0) {
     tlog(TLOG_ERROR, "start stream failed. ret=%d", ret);

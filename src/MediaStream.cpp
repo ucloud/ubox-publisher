@@ -24,6 +24,7 @@ MediaStream::MediaStream() {
   mEnd = false;
   mFinish = false;
   mInputFPS = 0;
+  mAddClock = false;
   mAccel = accelNone;
 }
 
@@ -56,9 +57,9 @@ int MediaStream::setAccel() {
 }
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
-                      const char *accel, int srcWidth, int srcHeight, bool copy,
-                      int dstWidth, int dstHeight, int fps, int inputfps,
-                      int bitrate, const char *url) {
+                      const char *accel, int srcWidth, int srcHeight,
+                      bool hevcEncode, int dstWidth, int dstHeight, int fps,
+                      int inputfps, int bitrate, const char *url) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
     tlog(TLOG_INFO, "media stream reopen");
@@ -85,13 +86,13 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
     mAccel = accel;
   mSrcWidth = srcWidth;
   mSrcHeight = srcHeight;
-  mStreamCopy = copy;
+  mHevcEncode = hevcEncode;
   mDstWidth = dstWidth;
   mDstHeight = dstHeight;
   mFps = fps;
   mInputFPS = inputfps;
   if (mInputFPS == 0)
-      mInputFPS = 60;
+    mInputFPS = 60;
   mBitrate = bitrate;
   mUrl = url;
 
@@ -124,10 +125,6 @@ int MediaStream::Close() {
 }
 
 void MediaStream::SetBitrate(int bitrate) {
-  if (mStreamCopy) {
-    tlog(TLOG_INFO, "stream copy, can not set bitrate");
-    return;
-  }
   if (mBitrate != bitrate) {
     tlog(TLOG_INFO, "setting bitrate %d Kbps", bitrate);
     GstElement *encoder = gst_bin_get_by_name(GST_BIN(mPipeline), "encoder");
@@ -192,6 +189,15 @@ void MediaStream::addFilterFramerate() {
 void MediaStream::addVideoConvert() {
   GstElement *e = gst_element_factory_make("videoconvert", "videoconvert");
   mElements.push_back(e);
+
+  if (mAccel == accelNone && mHevcEncode) {
+    GstCaps *caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING,
+                                        "I420", NULL);
+    e = gst_element_factory_make("capsfilter", "filter_convert");
+    g_object_set(e, "caps", caps, NULL);
+    gst_caps_unref(caps);
+    mElements.push_back(e);
+  }
 }
 
 void MediaStream::addDepay() {
@@ -210,11 +216,21 @@ void MediaStream::addDecoder() {
   mElements.push_back(e);
 }
 
+void MediaStream::addNVConv() {
+  GstElement *e;
+  e = gst_element_factory_make("nvvidconv", "conv");
+  mElements.push_back(e);
+}
+
 void MediaStream::addScale() {
   GstElement *e;
-  if (mAccel == accelJetson)
-    e = gst_element_factory_make("nvvidconv", "scale");
-  else
+  if (mAccel == accelJetson) // reuse nvvidconv
+    return;
+  else if (mAccel == accelIntel) {
+    e = gst_element_factory_make("vaapipostproc", "scale");
+    g_object_set(e, "width", mDstWidth, "height", mDstHeight, "scale-method",
+                 2 /*high quality*/, NULL);
+  } else
     e = gst_element_factory_make("videoscale", "scale");
   mElements.push_back(e);
 }
@@ -240,21 +256,37 @@ void MediaStream::addFilterScale() {
 void MediaStream::addEncoder() {
   GstElement *e;
   if (mAccel == accelIntel) {
-    e = gst_element_factory_make("vaapih264enc", "encoder");
-    g_object_set(e, "quality-level", 3, "cpb-length", 800, "rate-control", 2/*cbr*/,
-                 "keyframe-period", 10, "tune", 1,
-                 NULL);
+    if (mHevcEncode) {
+      e = gst_element_factory_make("vaapih265enc", "encoder");
+    } else {
+      e = gst_element_factory_make("vaapih264enc", "encoder");
+    }
+    g_object_set(e, "quality-level", 3, "cpb-length", 800, "rate-control",
+                 2 /*cbr*/, "keyframe-period", 10, NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
-    e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-    g_object_set(e, "vbv-size", 1000000, "profile", 4/*High*/,
-                 "iframeinterval", 10, "control-rate", 1/*constant_bitrate*/, "maxperf-enable", 1,
-                 "bitrate", mBitrate * 1000, NULL);
+    if (mHevcEncode) {
+      e = gst_element_factory_make("nvv4l2h265enc", "encoder");
+      g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/,
+                   "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
+                   "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
+    } else {
+      e = gst_element_factory_make("nvv4l2h264enc", "encoder");
+      g_object_set(e, "vbv-size", 1000000, "profile", 4 /*High*/,
+                   "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
+                   "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
+    }
   } else {
-    e = gst_element_factory_make("x264enc", "encoder");
-    g_object_set(e, "key-int-max", 10, "tune", 4/*zerolatency*/, "speed-preset", 1/*ultrafast*/,
-                 "vbv-buf-capacity", 300,
-                 NULL);
+    if (mHevcEncode) {
+      e = gst_element_factory_make("x265enc", "encoder");
+      g_object_set(e, "tune", 4 /*zerolatency*/,
+                   "speed-preset", 1 /*ultrafast*/, NULL);
+    } else {
+      e = gst_element_factory_make("x264enc", "encoder");
+      g_object_set(e, "key-int-max", 10, "tune", 4 /*zerolatency*/,
+                   "speed-preset", 1 /*ultrafast*/, "vbv-buf-capacity", 300,
+                   NULL);
+    }
     setBitrate(e, mBitrate);
   }
   mElements.push_back(e);
@@ -262,7 +294,10 @@ void MediaStream::addEncoder() {
 
 void MediaStream::addParser() {
   GstElement *e;
-  e = gst_element_factory_make("h264parse", "parser");
+  if (mHevcEncode)
+    e = gst_element_factory_make("h265parse", "parser");
+  else
+    e = gst_element_factory_make("h264parse", "parser");
   mElements.push_back(e);
 }
 
@@ -278,7 +313,7 @@ void MediaStream::addFilterProfile() {
 }
 
 void MediaStream::addFlvmux() {
-  GstElement *e = gst_element_factory_make("flvmux", "flvmux");
+  GstElement *e = gst_element_factory_make("uflvmux", "flvmux");
   g_object_set(e, "streamable", true, NULL);
   mElements.push_back(e);
 }
@@ -297,22 +332,28 @@ int MediaStream::setupPipeline() {
     addDepay();
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
-    //addClock();
-    if (mFps > 0) {
+    if (mAddClock)
+      addClock();
+    if (mFps > 0 && mFps != mInputFPS) {
       addVideoRate();
       addFilterFramerate();
     }
   }
+
+  if (mAccel == accelJetson)
+    addNVConv();
   // scale
-  addScale();
-  addFilterScale();
+  if (mSrcWidth != mDstWidth && mSrcHeight != mDstHeight) {
+    addScale();
+    if (mAccel != accelIntel)
+      addFilterScale();
+  }
 
   addVideoConvert();
 
   addEncoder();
-  if (mAccel == accelJetson)
-    addParser();
-  else
+  addParser();
+  if (!mHevcEncode)
     addFilterProfile();
 
   addFlvmux();

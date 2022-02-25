@@ -5,13 +5,14 @@ rtmp stream publisher
 1. hardware acceleration, support Intel HD graphics/Jetson
 2. RTSP/v4l2/custom FPGA pull, rtmp push
 3. much higher performance v4l2 element
+4. hevc in rtmp
 
 ### Performance
 
 | hardware platform | input | output | cpu usage | process latency |
 | --- | --- | --- | --- | -- |
 | Jetson Xavier NX | v4l2,1280*720,YUYV,30fps | rtmp,h264 high yuv420p,640*360,30fps,2Mbps |  10% | ![proctime.png](doc/jetson-proctime.png) |
-| Intel J1900 | rtsp,h264 main yuv420p,1280*720,25fps |  rtmp,h264 high yuv420p,640*480,25fps,2Mbps | 17% | todo |
+| Intel J1900 | rtsp,h264 main yuv420p,1280*720,25fps |  rtmp,h264 high yuv420p,640*480,25fps,2Mbps | 8% | todo |
 
 #### Latency explain
 

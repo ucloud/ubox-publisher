@@ -11,11 +11,10 @@
 void showUsage() {
   std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s v4l2]"
                " [-d input]"
-               " [-c] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
+               " [-e] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
                " [-a rtmp://x.x.x] [-v]"
             << std::endl;
   std::cout << "    -s input source type, rtsp|v4l2|fpga-wrh" << std::endl
-            << "    -c stream copy" << std::endl
             << "    -b bitrate, Kbps, default 2000" << std::endl
             << "    -f output fps, default 24" << std::endl
             << "    -F input fps, default 60" << std::endl
@@ -42,7 +41,7 @@ int main(int argc, char *argv[]) {
   int fps = 0;
   int inputfps = 0;
   int bitrate = 2000;
-  bool copy = false;
+  bool hevcEncode = false;
   bool verbose = false;
   signed char ch;
   std::string type, accelPlatform;
@@ -50,7 +49,7 @@ int main(int argc, char *argv[]) {
   if (argc < 2 || strcmp(argv[1], "-h") == 0) {
     showUsage();
   }
-  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:W:h:H:f:F:b:p:cv")) != -1) {
+  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:W:h:H:f:F:b:p:cve")) != -1) {
     switch (ch) {
     case 'u':
       sock_path = optarg;
@@ -91,11 +90,11 @@ int main(int argc, char *argv[]) {
     case 's':
       type = optarg;
       break;
-    case 'c':
-      copy = true;
-      break;
     case 'v':
       verbose = true;
+      break;
+    case 'e':
+      hevcEncode = true;
       break;
     default:
       std::cout << "unknown option " << ch << std::endl;
@@ -126,7 +125,7 @@ int main(int argc, char *argv[]) {
     tlog(TLOG_INFO, "(device) %s, (accel) %s, (url) %s\n", deviceName.c_str(),
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
-                        width, height, copy, outWidth, outHeight, fps, inputfps, bitrate,
+                        width, height, hevcEncode, outWidth, outHeight, fps, inputfps, bitrate,
                         url.c_str());
   }
 
