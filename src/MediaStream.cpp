@@ -241,8 +241,8 @@ void MediaStream::addEncoder() {
   GstElement *e;
   if (mAccel == accelIntel) {
     e = gst_element_factory_make("vaapih264enc", "encoder");
-    g_object_set(e, "quality-level", 1, "cpb-length", 1000, "rate-control", 4/*vbr*/,
-                 "keyframe-period", 10,
+    g_object_set(e, "quality-level", 3, "cpb-length", 800, "rate-control", 2/*cbr*/,
+                 "keyframe-period", 10, "tune", 1,
                  NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {

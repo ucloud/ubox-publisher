@@ -9,14 +9,20 @@
 #include <unistd.h>
 
 void showUsage() {
-  std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s "
-               "v4l2] [-d input]"
-               "[-c] [-f 24] [-w 640] [-h 480] [-b 2000] [-F 16] [-p intel|jetson][-a "
-               "rtmp://x.x.x] [-v]"
+  std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s v4l2]"
+               " [-d input]"
+               " [-c] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
+               " [-a rtmp://x.x.x] [-v]"
             << std::endl;
   std::cout << "    -s input source type, rtsp|v4l2|fpga-wrh" << std::endl
             << "    -c stream copy" << std::endl
-            << "    -b bitrate, Kbps" << std::endl
+            << "    -b bitrate, Kbps, default 2000" << std::endl
+            << "    -f output fps, default 24" << std::endl
+            << "    -F input fps, default 60" << std::endl
+            << "    -w input width" << std::endl
+            << "    -h input height" << std::endl
+            << "    -W output width" << std::endl
+            << "    -H output height" << std::endl
             << "    -v verbose" << std::endl;
   std::cout << "example: publisher -u @/tmp/publish.sock -t "
                "/var/log/publisher/video.log"
@@ -32,6 +38,7 @@ int main(int argc, char *argv[]) {
   std::string deviceName = "";
   int width = 0;
   int height = 0;
+  int outWidth = 640, outHeight = 480;
   int fps = 0;
   int inputfps = 0;
   int bitrate = 2000;
@@ -43,7 +50,7 @@ int main(int argc, char *argv[]) {
   if (argc < 2 || strcmp(argv[1], "-h") == 0) {
     showUsage();
   }
-  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:h:f:F:b:p:cv")) != -1) {
+  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:W:h:H:f:F:b:p:cv")) != -1) {
     switch (ch) {
     case 'u':
       sock_path = optarg;
@@ -65,6 +72,12 @@ int main(int argc, char *argv[]) {
       break;
     case 'h':
       height = atoi(optarg);
+      break;
+    case 'W':
+      outWidth = atoi(optarg);
+      break;
+    case 'H':
+      outHeight = atoi(optarg);
       break;
     case 'f':
       fps = atoi(optarg);
@@ -113,7 +126,7 @@ int main(int argc, char *argv[]) {
     tlog(TLOG_INFO, "(device) %s, (accel) %s, (url) %s\n", deviceName.c_str(),
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
-                        width, height, copy, 640, 480, fps, inputfps, bitrate,
+                        width, height, copy, outWidth, outHeight, fps, inputfps, bitrate,
                         url.c_str());
   }
 
