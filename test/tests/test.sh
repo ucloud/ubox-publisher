@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
+#run as root
 
 cd `dirname ${BASH_SOURCE[@]}`
 
 BUILDDIR=../../build
 PUBLISHER_CMD=$BUILDDIR/bin/ubox-publisher
 CLI_CMD=$BUILDDIR/test/cli
+pid=
 
+function log() {
+    echo "`date +%Y.%m.%d-%H:%M:%S.%N` [$$] $*"
+}
 
 start_publisher() {
-    nohup sudo $PUBLISHER_CMD -u @/tmp/publisher.sock > publisher.log 2>&1 &
-    echo "$!" > .publisher.pid
+    nohup $PUBLISHER_CMD -u @/tmp/publisher.sock > publisher.log 2>&1 &
+    pid=$!
 }
 
 stop_publisher() {
-    local pid=$(cat .publisher.pid)
-    ps -ef | grep -i ubox-publisher | grep -i $pid | awk '{print $2}' | xargs sudo kill
+    ps -ef | grep -i ubox-publisher | grep -i $pid | awk '{print $2}' | xargs kill
 }
 
 make_push_stream_request() {
@@ -28,11 +32,11 @@ make_push_stream_request() {
 
 check_result() {
     local s=$1
-    timeout 15 ffprobe $RTMPURL 2>&1 | grep -iq $s
+    timeout 15 ffprobe -hide_banner $RTMPURL 2>&1 | grep -iq "Video: $s"
     if [[ $? -eq 0 ]]; then
-        echo "test pass"
+        log "test pass, cpu $(pidstat -p $pid 1 2 | grep -i ave | awk '{print $8}')%"
     else
-        echo "test fail"
+        log "test fail"
         exit 1
     fi
 }
@@ -44,7 +48,7 @@ do_test() {
     local rtmpurl=$4
     local accel=$5
     local result=$6
-    echo "do test $device $encode $decode $tmpurl $accel, expect $result"
+    log "do test $device,$encode,$decode,$rtmpurl,$accel, expect $result"
     make_push_stream_request "$device" "$encode" "$decode" "$rtmpurl" "$accel"
     $CLI_CMD @/tmp/publisher.sock < .tmp.json
     check_result "$result"
@@ -52,21 +56,42 @@ do_test() {
     sleep 3
 }
 
+test_platform() {
+    #v4l2
+    do_test $DEVICE "" h264 $RTMPURL "" h264
+    if [[ $platform != "j1900" && $platform != "jetson" ]]; then
+        do_test $DEVICE "" h265 $RTMPURL "" hevc
+    fi
+    do_test $DEVICE "" h264 $RTMPURL none h264
+    do_test $DEVICE "" h265 $RTMPURL none hevc
+    
+    #rtsp
+    do_test $DEVICE_RTSP_H264 h264 h264 $RTMPURL "" h264
+    if [[ $platform != "j1900" ]]; then
+        do_test $DEVICE_RTSP_H265 h265 h264 $RTMPURL "" h264
+    fi
+    do_test $DEVICE_RTSP_H264 h264 h264 $RTMPURL none h264
+    do_test $DEVICE_RTSP_H265 h265 h264 $RTMPURL none h264
+}
+
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+    echo "usage:$0 [j1900|jetson|all]"
+    echo "usage:$0 device decoder encoder rtmp_url accel check_string"
+    exit 1
+fi
+
 . test.conf
 
 start_publisher
 sleep 2
 
-#v4l2
-do_test $DEVICE h264 h264 $RTMPURL intel h264
-do_test $DEVICE h264 h265 $RTMPURL intel h265
-do_test $DEVICE h264 h264 $RTMPURL none h264
-do_test $DEVICE h264 h265 $RTMPURL none h265
-
-#rtsp
-do_test $DEVICE_RTSP_H264 h264 h264 $RTMPURL intel h264
-do_test $DEVICE_RTSP_H265 h265 h264 $RTMPURL intel h264
-do_test $DEVICE_RTSP_H264 h264 h264 $RTMPURL none h264
-do_test $DEVICE_RTSP_H265 h265 h264 $RTMPURL none h264
+if [[ $# -eq 6 ]]; then
+    do_test $1 $2 $3 $4 $5 $6
+elif [[ $# -eq 1 ]]; then
+    platform=$1
+    test_platform $platform
+else
+    test_platform all
+fi
 
 stop_publisher

@@ -430,13 +430,9 @@ void MediaStream::loop_run() {
     std::thread th = std::thread(&MediaStream::run, this);
     h = th.native_handle();
     th.detach();
-    while (!mQuit) {
+    while (!mEnd) {
       if (mFinish)
         i++;
-      if (mEnd) {
-        tlog(TLOG_INFO, "thread end");
-        break;
-      }
       if (i > 25) {
         // th is deadlock
         tlog(TLOG_WARN, "deadlock detected");
@@ -457,6 +453,7 @@ void MediaStream::run() {
     mElements.clear();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     mRestart = true;
+    mEnd = true;
     return;
   } else if (result < 0) {
     mElements.clear();
@@ -470,8 +467,9 @@ void MediaStream::run() {
     gst_element_set_state(mPipeline, GST_STATE_NULL);
     gst_object_unref(mPipeline);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    mRestart = true;
     mElements.clear();
+    mRestart = true;
+    mEnd = true;
     return;
   }
 
