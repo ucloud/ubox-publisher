@@ -17,7 +17,7 @@ public:
     ~MediaStream();
 
     int Open(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
-            bool hevcEncode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
+            const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
     int Close();
 
     void SetBitrate(int bitrate);
@@ -62,7 +62,8 @@ private:
     std::string mUrl;
     int mSrcWidth;
     int mSrcHeight;
-    bool mHevcEncode;
+    std::string mEncode;
+    std::string mDecode;
     bool mAddClock;
     int mFps;
     int mInputFPS;

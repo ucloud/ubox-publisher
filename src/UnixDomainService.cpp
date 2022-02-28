@@ -195,7 +195,8 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   cJSON *jsonAccel = cJSON_GetObjectItem(jsonRequest, "Accel");
   cJSON *jsonSrcWidth = cJSON_GetObjectItem(jsonRequest, "SrcWidth");
   cJSON *jsonSrcHeight = cJSON_GetObjectItem(jsonRequest, "SrcHeight");
-  cJSON *jsonStreamCopy = cJSON_GetObjectItem(jsonRequest, "HevcEncode");
+  cJSON *jsonEncode = cJSON_GetObjectItem(jsonRequest, "Encode");
+  cJSON *jsonDecode = cJSON_GetObjectItem(jsonRequest, "Decode");
   cJSON *jsonDstWidth = cJSON_GetObjectItem(jsonRequest, "DstWidth");
   cJSON *jsonDstHeight = cJSON_GetObjectItem(jsonRequest, "DstHeight");
   cJSON *jsonURL = cJSON_GetObjectItem(jsonRequest, "URL");
@@ -203,10 +204,9 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   cJSON *jsonInputFPS = cJSON_GetObjectItem(jsonRequest, "InputFPS");
   cJSON *jsonBitrate = cJSON_GetObjectItem(jsonRequest, "Bitrate");
 
-  std::string inputType, accel;
+  std::string inputType, accel, encode, decode;
   int srcWidth = 1280;
   int srcHeight = 720;
-  bool hevcEncode = false;
   int dstWidth = 640;
   int dstHeight = 480;
   int fps = 24;
@@ -240,8 +240,11 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
     if (jsonSrcHeight->valueint > 0)
       srcHeight = jsonSrcHeight->valueint;
   }
-  if (cJSON_IsTrue(jsonStreamCopy)) {
-    hevcEncode = true;
+  if (cJSON_IsString(jsonEncode)) {
+      encode = jsonEncode->valuestring;
+  }
+  if (cJSON_IsString(jsonDecode)) {
+      decode = jsonDecode->valuestring;
   }
   if (cJSON_IsNumber(jsonDstWidth)) {
     if (jsonDstWidth->valueint > 0)
@@ -266,14 +269,14 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
 
   tlog(TLOG_INFO,
        "start stream, inputType(%s), device(%s), accel(%s), srcWidth(%d), "
-       "srcHeight(%d), hevcEncode(%d), "
+       "srcHeight(%d), Encode(%s), Decode(%s),"
        "dstWidth(%d), dstHeight(%d), fps(%d), inputfps(%d), bitrate(%d), URL(%s)",
        inputType.c_str(), jsonDevice->valuestring, accel.c_str(), srcWidth,
-       srcHeight, hevcEncode, dstWidth, dstHeight, fps, inputfps, bitrate,
+       srcHeight, encode.c_str(), decode.c_str(), dstWidth, dstHeight, fps, inputfps, bitrate,
        jsonURL->valuestring);
   int ret = handler.StartStream(
       inputType.c_str(), (const char *)jsonDevice->valuestring, accel.c_str(),
-      srcWidth, srcHeight, hevcEncode, dstWidth, dstHeight, fps, inputfps, bitrate,
+      srcWidth, srcHeight, encode.c_str(), decode.c_str(), dstWidth, dstHeight, fps, inputfps, bitrate,
       (const char *)jsonURL->valuestring);
   if (ret != 0) {
     tlog(TLOG_ERROR, "start stream failed. ret=%d", ret);

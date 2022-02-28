@@ -11,6 +11,11 @@ const char *accelNone = "none";
 const char *accelJetson = "jetson";
 const char *accelIntel = "intel";
 
+const char *encodeH264 = "h264";
+const char *encodeH265 = "h265";
+const char *decodeH264 = "h264";
+const char *decodeH265 = "h265";
+
 static inline int isNumber(const char s[]) {
   for (int i = 0; s[i] != '\0'; i++) {
     if (isdigit(s[i]) == 0)
@@ -26,6 +31,8 @@ MediaStream::MediaStream() {
   mInputFPS = 0;
   mAddClock = false;
   mAccel = accelNone;
+  mEncode = encodeH264;
+  mDecode = decodeH264;
 }
 
 MediaStream::~MediaStream() {}
@@ -58,8 +65,9 @@ int MediaStream::setAccel() {
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight,
-                      bool hevcEncode, int dstWidth, int dstHeight, int fps,
-                      int inputfps, int bitrate, const char *url) {
+                      const char *encode, const char *decode, int dstWidth,
+                      int dstHeight, int fps, int inputfps, int bitrate,
+                      const char *url) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
     tlog(TLOG_INFO, "media stream reopen");
@@ -86,7 +94,10 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
     mAccel = accel;
   mSrcWidth = srcWidth;
   mSrcHeight = srcHeight;
-  mHevcEncode = hevcEncode;
+  if (strlen(encode) > 0)
+    mEncode = encode;
+  if (strlen(decode) > 0)
+    mDecode = decode;
   mDstWidth = dstWidth;
   mDstHeight = dstHeight;
   mFps = fps;
@@ -96,8 +107,9 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mBitrate = bitrate;
   mUrl = url;
 
-  tlog(TLOG_INFO, "input=%s,accel=%s,fps=%d,inputfps=%d", mInputType.c_str(),
-       mAccel.c_str(), mFps, mInputFPS);
+  tlog(TLOG_INFO, "input=%s,accel=%s,fps=%d,inputfps=%d,encode=%s,decode=%s",
+       mInputType.c_str(), mAccel.c_str(), mFps, mInputFPS, mEncode.c_str(),
+       mDecode.c_str());
 
   mQuit = false;
   mRestart = true;
@@ -190,7 +202,7 @@ void MediaStream::addVideoConvert() {
   GstElement *e = gst_element_factory_make("videoconvert", "videoconvert");
   mElements.push_back(e);
 
-  if (mAccel == accelNone && mHevcEncode) {
+  if (mAccel == accelNone && mEncode == encodeH265) {
     GstCaps *caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING,
                                         "I420", NULL);
     e = gst_element_factory_make("capsfilter", "filter_convert");
@@ -201,17 +213,29 @@ void MediaStream::addVideoConvert() {
 }
 
 void MediaStream::addDepay() {
-  GstElement *e = gst_element_factory_make("rtph264depay", "depay");
+  GstElement *e;
+  if (mDecode == decodeH265)
+    e = gst_element_factory_make("rtph265depay", "depay");
+  else
+    e = gst_element_factory_make("rtph264depay", "depay");
   mElements.push_back(e);
 }
 
 void MediaStream::addDecoder() {
   GstElement *e;
-  if (mAccel == accelIntel) {
-    e = gst_element_factory_make("vaapih264dec", "decoder");
-    g_object_set(e, "low-latency", 1, NULL);
+  if (mDecode == decodeH265) {
+    if (mAccel == accelIntel) {
+      e = gst_element_factory_make("vaapih265dec", "decoder");
+    } else {
+      e = gst_element_factory_make("avdec_h265", "decoder");
+    }
   } else {
-    e = gst_element_factory_make("avdec_h264", "decoder");
+    if (mAccel == accelIntel) {
+      e = gst_element_factory_make("vaapih264dec", "decoder");
+      g_object_set(e, "low-latency", 1, NULL);
+    } else {
+      e = gst_element_factory_make("avdec_h264", "decoder");
+    }
   }
   mElements.push_back(e);
 }
@@ -256,7 +280,7 @@ void MediaStream::addFilterScale() {
 void MediaStream::addEncoder() {
   GstElement *e;
   if (mAccel == accelIntel) {
-    if (mHevcEncode) {
+    if (mEncode == encodeH265) {
       e = gst_element_factory_make("vaapih265enc", "encoder");
     } else {
       e = gst_element_factory_make("vaapih264enc", "encoder");
@@ -265,7 +289,7 @@ void MediaStream::addEncoder() {
                  2 /*cbr*/, "keyframe-period", 10, NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
-    if (mHevcEncode) {
+    if (mEncode == encodeH265) {
       e = gst_element_factory_make("nvv4l2h265enc", "encoder");
       g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/,
                    "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
@@ -277,10 +301,10 @@ void MediaStream::addEncoder() {
                    "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
     }
   } else {
-    if (mHevcEncode) {
+    if (mEncode == encodeH265) {
       e = gst_element_factory_make("x265enc", "encoder");
-      g_object_set(e, "tune", 4 /*zerolatency*/,
-                   "speed-preset", 1 /*ultrafast*/, NULL);
+      g_object_set(e, "tune", 4 /*zerolatency*/, "speed-preset",
+                   1 /*ultrafast*/, NULL);
     } else {
       e = gst_element_factory_make("x264enc", "encoder");
       g_object_set(e, "key-int-max", 10, "tune", 4 /*zerolatency*/,
@@ -294,7 +318,7 @@ void MediaStream::addEncoder() {
 
 void MediaStream::addParser() {
   GstElement *e;
-  if (mHevcEncode)
+  if (mEncode == encodeH265)
     e = gst_element_factory_make("h265parse", "parser");
   else
     e = gst_element_factory_make("h264parse", "parser");
@@ -352,9 +376,9 @@ int MediaStream::setupPipeline() {
   addVideoConvert();
 
   addEncoder();
-  addParser();
-  if (!mHevcEncode)
+  if (mEncode == encodeH264 && mAccel == accelIntel)
     addFilterProfile();
+  addParser();
 
   addFlvmux();
   addRTMPSink();
@@ -406,7 +430,7 @@ void MediaStream::loop_run() {
     std::thread th = std::thread(&MediaStream::run, this);
     h = th.native_handle();
     th.detach();
-    while (true) {
+    while (!mQuit) {
       if (mFinish)
         i++;
       if (mEnd) {
@@ -436,6 +460,7 @@ void MediaStream::run() {
     return;
   } else if (result < 0) {
     mElements.clear();
+    mEnd = true;
     return;
   }
 
@@ -533,7 +558,7 @@ void MediaStream::onRtspPadAdded(GstElement *src, GstPad *srcPad,
     const char *name = gst_structure_get_string(newPadStruct, "encoding-name");
     tlog(TLOG_DEBUG, "new pad added, type=%s, media=%s, encoding:%s",
          newPadType, gst_structure_get_string(newPadStruct, "media"), name);
-    if (g_str_has_prefix(name, "H264")) {
+    if (g_str_has_prefix(name, "H264") || g_str_has_prefix(name, "H265")) {
       gst_pad_link(srcPad, sinkPad);
     } else {
       tlog(TLOG_WARN, "unsupported encode %s", name);

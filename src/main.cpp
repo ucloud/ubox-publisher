@@ -11,7 +11,7 @@
 void showUsage() {
   std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s v4l2]"
                " [-d input]"
-               " [-e] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
+               " [-e h264|h265] [-E h264|h265] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
                " [-a rtmp://x.x.x] [-v]"
             << std::endl;
   std::cout << "    -s input source type, rtsp|v4l2|fpga-wrh" << std::endl
@@ -22,6 +22,8 @@ void showUsage() {
             << "    -h input height" << std::endl
             << "    -W output width" << std::endl
             << "    -H output height" << std::endl
+            << "    -e encode method" << std::endl
+            << "    -E decode method" << std::endl
             << "    -v verbose" << std::endl;
   std::cout << "example: publisher -u @/tmp/publish.sock -t "
                "/var/log/publisher/video.log"
@@ -41,7 +43,7 @@ int main(int argc, char *argv[]) {
   int fps = 0;
   int inputfps = 0;
   int bitrate = 2000;
-  bool hevcEncode = false;
+  std::string encode, decode;
   bool verbose = false;
   signed char ch;
   std::string type, accelPlatform;
@@ -49,7 +51,7 @@ int main(int argc, char *argv[]) {
   if (argc < 2 || strcmp(argv[1], "-h") == 0) {
     showUsage();
   }
-  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:W:h:H:f:F:b:p:cve")) != -1) {
+  while ((ch = getopt(argc, argv, "u:t:s:d:a:w:W:h:H:f:F:b:p:cve:E:")) != -1) {
     switch (ch) {
     case 'u':
       sock_path = optarg;
@@ -94,7 +96,10 @@ int main(int argc, char *argv[]) {
       verbose = true;
       break;
     case 'e':
-      hevcEncode = true;
+      encode = optarg;
+      break;
+    case 'E':
+      decode = optarg;
       break;
     default:
       std::cout << "unknown option " << ch << std::endl;
@@ -125,7 +130,7 @@ int main(int argc, char *argv[]) {
     tlog(TLOG_INFO, "(device) %s, (accel) %s, (url) %s\n", deviceName.c_str(),
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
-                        width, height, hevcEncode, outWidth, outHeight, fps, inputfps, bitrate,
+                        width, height, encode.c_str(), decode.c_str(), outWidth, outHeight, fps, inputfps, bitrate,
                         url.c_str());
   }
 
