@@ -49,18 +49,18 @@ int MediaStream::setInputType(const char *deviceName) {
   return 0;
 }
 
-int MediaStream::setAccel() {
+std::string MediaStream::getAccel() {
   std::ifstream t("/proc/cpuinfo");
   std::stringstream buffer;
   buffer << t.rdbuf();
   if (buffer.str().find("Intel") != std::string::npos)
-    mAccel = accelIntel;
+      return accelIntel;
   else {
     std::ifstream f("/etc/nv_tegra_release");
     if (f.is_open())
-      mAccel = accelJetson;
+      return accelJetson;
   }
-  return 0;
+  return "";
 }
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
@@ -81,7 +81,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
     lock.unlock();
     return -1;
   }
-  setAccel();
+  mAccel = getAccel();
 
   mOpened = true;
   lock.unlock();
@@ -170,9 +170,9 @@ void MediaStream::addSource() {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
                  mSrcHeight, "fps", mInputFPS, NULL);
-    if (mAccel != "jetson") { // buggy jetson camera
-      g_object_set(e, "change", 1, NULL);
-    }
+    //if (getAccel() != "jetson") { // buggy jetson camera
+    //  g_object_set(e, "change", 1, NULL);
+    //}
   }
   mElements.push_back(e);
 }

@@ -45,7 +45,7 @@ private:
     void run();
     void process();
     int setInputType(const char *deviceName);
-    int setAccel();
+    std::string getAccel();
 
 private:
     bool mQuit;
