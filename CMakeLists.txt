@@ -29,7 +29,8 @@ execute_process(
     OUTPUT_VARIABLE LINUXOSVERSION
     )
 
-if (${LINUXOS} STREQUAL "centos" AND ${LINUXOSVERSION} STREQUAL "8")
+if (${LINUXOS} STREQUAL "centos" AND ${LINUXOSVERSION} STREQUAL "7")
+else ()
     add_subdirectory(uflv)
 endif ()
 
