@@ -17,7 +17,7 @@ public:
     ~MediaStream();
 
     int Open(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
-            const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
+            const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url, bool clockEnable);
     int Close();
     void SetBitrate(int bitrate);
     int GetStatus(std::string &msg);

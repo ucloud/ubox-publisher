@@ -3,6 +3,10 @@
 #include <fstream>
 #include <sstream>
 
+#ifndef BACK_PNG_FILE
+#define BACK_PNG_FILE "/usr/share/ubox-publisher/back.png"
+#endif
+
 const char *inputWrhCamera = "wrh-fpga";
 const char *inputRTSP = "rtsp";
 const char *inputV4L2 = "v4l2";
@@ -86,7 +90,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
                       const char *accel, int srcWidth, int srcHeight,
                       const char *encode, const char *decode, int dstWidth,
                       int dstHeight, int fps, int inputfps, int bitrate,
-                      const char *url) {
+                      const char *url, bool clockEnable) {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   if (mOpened) {
     tlog(TLOG_INFO, "media stream reopen");
@@ -103,8 +107,8 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mAccel = getAccel();
 
   mOpened = true;
-  lock.unlock();
-
+  if (clockEnable)
+      mAddClock = true;
   if (strlen(inputType) > 0)
     mInputType = inputType;
 
@@ -133,6 +137,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
   mQuit = false;
   mRestart = true;
   mStreamThread = std::thread(&MediaStream::loop_run, this);
+  lock.unlock();
   return 0;
 }
 
@@ -204,8 +209,14 @@ void MediaStream::addSource() {
 }
 
 void MediaStream::addClock() {
-  GstElement *e = gst_element_factory_make("uclockoverlay", "uclockoverlay");
-  g_object_set(e, "ypad", 5, "font-desc", "Helvetica 15", NULL);
+  GstElement *e =
+      gst_element_factory_make("gdkpixbufoverlay", "gdkpixbufoverlay");
+  g_object_set(e, "location", BACK_PNG_FILE, "offset-x", 20, "offset-y", 25,
+               "overlay-height", 40, "overlay-width", 320, NULL);
+  mElements.push_back(e);
+
+  e = gst_element_factory_make("uclockoverlay", "uclockoverlay");
+  g_object_set(e, "xpad", 36, "font-desc", "Dejavu Sans Mono", NULL);
   mElements.push_back(e);
 }
 

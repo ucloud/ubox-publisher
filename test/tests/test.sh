@@ -32,7 +32,7 @@ make_push_stream_request() {
     local encode=$3
     local rtmpurl=$4
     local accel=$5
-    echo "{\"Action\":\"PushStream\", \"Encode\":\"$encode\",\"Decode\":\"$decode\",\"Accel\":\"$accel\",\"Device\": \"$device\", \"SrcWidth\":1280, \"SrcHeight\":720, \"URL\":\"$rtmpurl\", \"FPS\":30,\"Bitrate\":800}" > .tmp.json
+    echo "{\"Action\":\"PushStream\", \"Encode\":\"$encode\",\"Decode\":\"$decode\",\"Accel\":\"$accel\",\"Device\": \"$device\", \"SrcWidth\":1280, \"SrcHeight\":720, \"URL\":\"$rtmpurl\", \"FPS\":30,\"Bitrate\":800, \"ClockEnable\":true}" > .tmp.json
 }
 
 check_result() {
@@ -93,9 +93,13 @@ test_platform() {
     log "test rtsp end"
 }
 
-if [[ $1 == "-h" || $1 == "--help" ]]; then
+usage() {
     echo "usage:$0 [j1900|jetson|all]"
     echo "usage:$0 device decoder encoder rtmp_url accel check_string"
+}
+
+if [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]]; then
+    usage
     exit 1
 fi
 
@@ -113,7 +117,7 @@ elif [[ $# -eq 1 ]]; then
     platform=$1
     test_platform $platform
 else
-    test_platform all
+    usage
 fi
 
 stop_publisher

@@ -14,7 +14,7 @@ ControlHandler::~ControlHandler() {
 
 int ControlHandler::StartStream(const char *inputType, const char* deviceName, const char *accel, int srcWidth, int srcHeight,
                 const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate,
-                const char* rtmpURL) {
+                const char* rtmpURL, bool clockEnable) {
     std::unique_lock<std::mutex> lock(streamMutex);
     if (streamOpened) {
         tlog(TLOG_INFO, "stream already opened");
@@ -30,7 +30,7 @@ int ControlHandler::StartStream(const char *inputType, const char* deviceName, c
         stream = new MediaStream();
     }
 
-    int ret = stream->Open(inputType, deviceName, accel, srcWidth, srcHeight, encode, decode, dstWidth, dstHeight, fps, inputfps, bitrate, rtmpURL);
+    int ret = stream->Open(inputType, deviceName, accel, srcWidth, srcHeight, encode, decode, dstWidth, dstHeight, fps, inputfps, bitrate, rtmpURL, clockEnable);
     if (ret != 0) {
         tlog(TLOG_INFO, "stream open failed");
         streamOpened = false;

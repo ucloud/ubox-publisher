@@ -10,7 +10,7 @@
 
 void showUsage() {
   std::cout << "usage: publisher [-u @/tmp/publish.sock] [-t logfile path] [-s v4l2]"
-               " [-d input]"
+               " [-d input] [-c]"
                " [-e h264|h265] [-E h264|h265] [-F 60] [-w 640] [-h 480] [-b 2000] [-W 640] [-H 480] [-f 16] [-p intel|jetson]"
                " [-a rtmp://x.x.x] [-v]"
             << std::endl;
@@ -24,6 +24,7 @@ void showUsage() {
             << "    -H output height" << std::endl
             << "    -e encode method" << std::endl
             << "    -E decode method" << std::endl
+            << "    -c enable clock" << std::endl
             << "    -v verbose" << std::endl;
   std::cout << "example: publisher -u @/tmp/publish.sock -t "
                "/var/log/publisher/video.log"
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
   int inputfps = 0;
   int bitrate = 2000;
   std::string encode, decode;
-  bool verbose = false;
+  bool verbose = false, clockEnable = false;
   signed char ch;
   std::string type, accelPlatform;
 
@@ -95,6 +96,9 @@ int main(int argc, char *argv[]) {
     case 'v':
       verbose = true;
       break;
+    case 'c':
+      clockEnable = true;
+      break;
     case 'e':
       encode = optarg;
       break;
@@ -131,7 +135,7 @@ int main(int argc, char *argv[]) {
          accelPlatform.c_str(), url.c_str());
     handler.StartStream(type.c_str(), deviceName.c_str(), accelPlatform.c_str(),
                         width, height, encode.c_str(), decode.c_str(), outWidth, outHeight, fps, inputfps, bitrate,
-                        url.c_str());
+                        url.c_str(), clockEnable);
   }
 
   while (true) {

@@ -34,6 +34,8 @@ else ()
     add_subdirectory(uflv)
 endif ()
 
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/util/back.png DESTINATION /usr/share/ubox-publisher)
+
 set(CPACK_PACKAGE_NAME                      "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION                   "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY       "ubox-publisher")

@@ -10,7 +10,7 @@ public:
 
     int StartStream(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
                     const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int limitfps, int bitrate,
-                    const char* rtmpURL);
+                    const char* rtmpURL, bool clockEnable);
     int StopStream(const char* deviceName);
     int SetBitrate(const char* deviceName, int bitrate);
     int GetBitrate(const char* deviceName);

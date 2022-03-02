@@ -204,6 +204,7 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   cJSON *jsonFPS = cJSON_GetObjectItem(jsonRequest, "FPS");
   cJSON *jsonInputFPS = cJSON_GetObjectItem(jsonRequest, "InputFPS");
   cJSON *jsonBitrate = cJSON_GetObjectItem(jsonRequest, "Bitrate");
+  cJSON *jsonClockEnable = cJSON_GetObjectItem(jsonRequest, "ClockEnable");
 
   std::string inputType, accel, encode, decode;
   int srcWidth = 1280;
@@ -213,10 +214,16 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   int fps = 24;
   int inputfps = 0;
   int bitrate = 1000;
+  bool clockEnable = false;
 
   if (jsonInputType && !cJSON_IsString(jsonInputType)) {
     tlog(TLOG_INFO, "wrong data, data no input type");
     return GetJsonByCode(RETCODE_TYPE_WRONG_DATA, "no input type");
+  }
+
+  if (jsonClockEnable && cJSON_IsBool(jsonClockEnable)) {
+      if (cJSON_IsTrue(jsonClockEnable))
+          clockEnable = true;
   }
 
   if (cJSON_IsString(jsonInputType))
@@ -271,14 +278,14 @@ cJSON *UnixDomainService::PushStream_Parse(cJSON *jsonRequest) {
   tlog(TLOG_INFO,
        "start stream, inputType(%s), device(%s), accel(%s), srcWidth(%d), "
        "srcHeight(%d), Encode(%s), Decode(%s),"
-       "dstWidth(%d), dstHeight(%d), fps(%d), inputfps(%d), bitrate(%d), URL(%s)",
+       "dstWidth(%d), dstHeight(%d), fps(%d), inputfps(%d), bitrate(%d), URL(%s), clockEnable(%d)",
        inputType.c_str(), jsonDevice->valuestring, accel.c_str(), srcWidth,
        srcHeight, encode.c_str(), decode.c_str(), dstWidth, dstHeight, fps, inputfps, bitrate,
-       jsonURL->valuestring);
+       jsonURL->valuestring, clockEnable);
   int ret = handler.StartStream(
       inputType.c_str(), (const char *)jsonDevice->valuestring, accel.c_str(),
       srcWidth, srcHeight, encode.c_str(), decode.c_str(), dstWidth, dstHeight, fps, inputfps, bitrate,
-      (const char *)jsonURL->valuestring);
+      (const char *)jsonURL->valuestring, clockEnable);
   if (ret != 0) {
     tlog(TLOG_ERROR, "start stream failed. ret=%d", ret);
     return GetJsonByCode(RETCODE_TYPE_DEVICE_NOTOPEN, "device not open");
