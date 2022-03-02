@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #run as root
-#depend pidstat, ffmpeg
+#depend pidstat, ffmpeg(h265 in rtmp)
 
 cd `dirname ${BASH_SOURCE[@]}`
 
@@ -8,6 +8,7 @@ cd `dirname ${BASH_SOURCE[@]}`
 
 PUBLISHER_CMD=$BUILDDIR/bin/ubox-publisher
 CLI_CMD=$BUILDDIR/test/cli
+FFMPEG_CMD=${FFMPEG_CMD:-ffmpeg}
 pid=
 
 function log() {
@@ -36,10 +37,10 @@ make_push_stream_request() {
 
 check_result() {
     local s=$1
-    timeout 15 ffprobe -hide_banner $RTMPURL 2>&1 | grep -iq "Video: $s"
+    timeout 15 $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl 2>&1 | tee .ffmpeg.log | grep -iq "Video: $s"
     if [[ $? -eq 0 ]]; then
         log "test pass, cpu $(pidstat -p $pid 1 2 | grep -i ave | awk '{print $8}')%"
-        ffmpeg -hide_banner -i $RTMPURL -frames:v 1 $(date +%H_%M_%S).jpeg
+        $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl -frames:v 1 $s-$(date +%H_%M_%S).jpeg
     else
         log "test fail"
         stop_publisher
@@ -54,7 +55,7 @@ do_test() {
     local rtmpurl=$4
     local accel=$5
     local result=$6
-    log "do test $device,decoder=$decode,encoder=$encode,$rtmpurl,accel=$accel, expect $result"
+    log "do test $device,decoder=$decode,encoder=$encode,$rtmpurl,accel=${accel:-auto}, expect $result"
     make_push_stream_request "$device" "$decode" "$encode" "$rtmpurl" "$accel"
     $CLI_CMD @/tmp/publisher.sock < .tmp.json
     if [[ $encode == "h265" && ($platform == "jetson" || $accel == "jetson") ]]; then
@@ -80,7 +81,7 @@ test_platform() {
     fi
     do_test $DEVICE "" h265 $RTMPURL none hevc
     log "test v4l2 end"
-    
+
     #rtsp
     log "test rtsp begin"
     do_test $DEVICE_RTSP_H264 h264 h264 $RTMPURL "" h264

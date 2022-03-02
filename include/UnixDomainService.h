@@ -23,6 +23,7 @@ private:
     cJSON* GetBitrate_Parse(cJSON*);
     cJSON* PushStream_Parse(cJSON*);
     cJSON* CloseStream_Parse(cJSON*);
+    cJSON* GetStatus_Parse(cJSON*);
 
     cJSON* UnPacket(unsigned char* buf, int size);
     cJSON* GetJsonByCode(int retCode, const char* msg);

@@ -14,6 +14,7 @@ public:
     int StopStream(const char* deviceName);
     int SetBitrate(const char* deviceName, int bitrate);
     int GetBitrate(const char* deviceName);
+    int GetStatus(std::string &msg);
 
 private:
     std::string devName;

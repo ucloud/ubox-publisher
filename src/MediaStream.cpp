@@ -11,10 +11,8 @@ const char *accelNone = "none";
 const char *accelJetson = "jetson";
 const char *accelIntel = "intel";
 
-const char *encodeH264 = "h264";
-const char *encodeH265 = "h265";
-const char *decodeH264 = "h264";
-const char *decodeH265 = "h265";
+const char *codeH264 = "h264";
+const char *codeH265 = "h265";
 
 static inline int isNumber(const char s[]) {
   for (int i = 0; s[i] != '\0'; i++) {
@@ -31,8 +29,8 @@ MediaStream::MediaStream() {
   mInputFPS = 0;
   mAddClock = false;
   mAccel = accelNone;
-  mEncode = encodeH264;
-  mDecode = decodeH264;
+  mEncode = codeH264;
+  mDecode = codeH264;
 }
 
 MediaStream::~MediaStream() {}
@@ -54,13 +52,34 @@ std::string MediaStream::getAccel() {
   std::stringstream buffer;
   buffer << t.rdbuf();
   if (buffer.str().find("Intel") != std::string::npos)
-      return accelIntel;
+    return accelIntel;
   else {
     std::ifstream f("/etc/nv_tegra_release");
     if (f.is_open())
       return accelJetson;
   }
   return "";
+}
+
+void MediaStream::handleErrorMessage(GstMessage *msg) {
+  GError *err = NULL;
+  gchar *name, *debug = NULL;
+
+  name = gst_object_get_path_string(msg->src);
+  gst_message_parse_error(msg, &err, &debug);
+
+  char buf[256];
+  snprintf(buf, sizeof(buf), "ERROR: element %s, %s, debug: %s", name,
+           err->message, debug);
+  mErrorMsg = buf;
+
+  tlog(TLOG_ERROR, "ERROR: from element %s: %s\n", name, err->message);
+  if (debug != NULL)
+    tlog(TLOG_ERROR, "Additional debug info:\n%s\n", debug);
+
+  g_clear_error(&err);
+  g_free(debug);
+  g_free(name);
 }
 
 int MediaStream::Open(const char *inputType, const char *deviceName,
@@ -120,15 +139,13 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
 int MediaStream::Close() {
   std::unique_lock<std::mutex> lock(mThreadMutex);
   mQuit = true;
-  if (!mEnd) {
-    try {
-      mStreamThread.join();
-    } catch (...) {
-      tlog(TLOG_INFO, "catch stream thread error! stream thread quit!");
-      mOpened = false;
-      lock.unlock();
-      return 0;
-    }
+  try {
+    mStreamThread.join();
+  } catch (...) {
+    tlog(TLOG_INFO, "catch stream thread error! stream thread quit!");
+    mOpened = false;
+    lock.unlock();
+    return 0;
   }
   tlog(TLOG_INFO, "stream thread quit!");
   mOpened = false;
@@ -147,6 +164,15 @@ void MediaStream::SetBitrate(int bitrate) {
     setBitrate(encoder, bitrate);
   }
   mBitrate = bitrate;
+}
+
+int MediaStream::GetStatus(std::string &msg) {
+  if (mErrorMsg.empty()) {
+    msg = "ok";
+    return 0;
+  }
+  msg = mErrorMsg;
+  return 1;
 }
 
 void MediaStream::setBitrate(GstElement *encoder, int bitrate) {
@@ -170,9 +196,9 @@ void MediaStream::addSource() {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
                  mSrcHeight, "fps", mInputFPS, NULL);
-    //if (getAccel() != "jetson") { // buggy jetson camera
-    //  g_object_set(e, "change", 1, NULL);
-    //}
+    // if (getAccel() != "jetson") { // buggy jetson camera
+    //   g_object_set(e, "change", 1, NULL);
+    // }
   }
   mElements.push_back(e);
 }
@@ -202,7 +228,7 @@ void MediaStream::addVideoConvert() {
   GstElement *e = gst_element_factory_make("videoconvert", "videoconvert");
   mElements.push_back(e);
 
-  if (mAccel == accelNone && mEncode == encodeH265) {
+  if (mAccel == accelNone && mEncode == codeH265) {
     GstCaps *caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING,
                                         "I420", NULL);
     e = gst_element_factory_make("capsfilter", "filter_convert");
@@ -214,7 +240,7 @@ void MediaStream::addVideoConvert() {
 
 void MediaStream::addDepay() {
   GstElement *e;
-  if (mDecode == decodeH265)
+  if (mDecode == codeH265)
     e = gst_element_factory_make("rtph265depay", "depay");
   else
     e = gst_element_factory_make("rtph264depay", "depay");
@@ -223,7 +249,7 @@ void MediaStream::addDepay() {
 
 void MediaStream::addDecoder() {
   GstElement *e;
-  if (mDecode == decodeH265) {
+  if (mDecode == codeH265) {
     if (mAccel == accelIntel) {
       e = gst_element_factory_make("vaapih265dec", "decoder");
     } else {
@@ -280,7 +306,7 @@ void MediaStream::addFilterScale() {
 void MediaStream::addEncoder() {
   GstElement *e;
   if (mAccel == accelIntel) {
-    if (mEncode == encodeH265) {
+    if (mEncode == codeH265) {
       e = gst_element_factory_make("vaapih265enc", "encoder");
     } else {
       e = gst_element_factory_make("vaapih264enc", "encoder");
@@ -289,7 +315,7 @@ void MediaStream::addEncoder() {
                  2 /*cbr*/, "keyframe-period", 10, NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
-    if (mEncode == encodeH265) {
+    if (mEncode == codeH265) {
       e = gst_element_factory_make("nvv4l2h265enc", "encoder");
       g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/,
                    "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
@@ -301,7 +327,7 @@ void MediaStream::addEncoder() {
                    "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
     }
   } else {
-    if (mEncode == encodeH265) {
+    if (mEncode == codeH265) {
       e = gst_element_factory_make("x265enc", "encoder");
       g_object_set(e, "tune", 4 /*zerolatency*/, "speed-preset",
                    1 /*ultrafast*/, NULL);
@@ -318,7 +344,7 @@ void MediaStream::addEncoder() {
 
 void MediaStream::addParser() {
   GstElement *e;
-  if (mEncode == encodeH265)
+  if (mEncode == codeH265)
     e = gst_element_factory_make("h265parse", "parser");
   else
     e = gst_element_factory_make("h264parse", "parser");
@@ -376,7 +402,7 @@ int MediaStream::setupPipeline() {
   addVideoConvert();
 
   addEncoder();
-  if (mEncode == encodeH264 && mAccel == accelIntel)
+  if (mEncode == codeH264 && mAccel == accelIntel)
     addFilterProfile();
   addParser();
 
@@ -396,7 +422,10 @@ int MediaStream::setupPipeline() {
     if (!ok) {
       gchar *src = gst_element_get_name(*it);
       gchar *dst = gst_element_get_name(*(it + 1));
-      tlog(TLOG_ERROR, "gst link failed, src: %s, dst: %s", src, dst);
+      char buf[128];
+      snprintf(buf, sizeof(buf), "gst link failed, src: %s, dst: %s", src, dst);
+      mErrorMsg = buf;
+      tlog(TLOG_ERROR, "%s", mErrorMsg.c_str());
       g_free(src);
       g_free(dst);
       gst_object_unref(mPipeline);
@@ -413,7 +442,14 @@ int MediaStream::setupPipeline() {
   GstStateChangeReturn res =
       gst_element_set_state(mPipeline, GST_STATE_PLAYING);
   if (res == GST_STATE_CHANGE_FAILURE) {
-    tlog(TLOG_ERROR, "play failed");
+    GstMessage *err_msg;
+    GstBus *bus = gst_element_get_bus(mPipeline);
+    if ((err_msg = gst_bus_poll(bus, GST_MESSAGE_ERROR, 0))) {
+      tlog(TLOG_ERROR, "play failed");
+      handleErrorMessage(err_msg);
+      gst_message_unref(err_msg);
+    }
+    gst_object_unref(bus);
     gst_object_unref(mPipeline);
     return 1;
   }
@@ -479,20 +515,14 @@ void MediaStream::run() {
         (GstMessageType)(GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR |
                          GST_MESSAGE_EOS));
 
-    if (msg == NULL)
+    if (msg == NULL) {
+      mErrorMsg = "";
       continue;
-    GError *err;
-    gchar *debugInfo;
+    }
 
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_ERROR:
-      gst_message_parse_error(msg, &err, &debugInfo);
-      tlog(TLOG_ERROR, "Error received from element %s: %s",
-           GST_OBJECT_NAME(msg->src), err->message);
-      tlog(TLOG_ERROR, "Debugging information: %s",
-           debugInfo ? debugInfo : "none");
-      g_clear_error(&err);
-      g_free(debugInfo);
+      handleErrorMessage(msg);
       mRestart = true;
       break;
     case GST_MESSAGE_EOS:

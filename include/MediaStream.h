@@ -19,10 +19,11 @@ public:
     int Open(const char *inputType, const char* deviceName, const char* accel, int srcWidth, int srcHeight,
             const char *encode, const char *decode, int dstWidth, int dstHeight, int fps, int inputfps, int bitrate, const char *url);
     int Close();
-
     void SetBitrate(int bitrate);
+    int GetStatus(std::string &msg);
 
 private:
+    void handleErrorMessage(GstMessage *msg);
     void setBitrate(GstElement *encoder, int bitrate);
     static void onRtspPadAdded(GstElement *src, GstPad *src_pad, gpointer user_data);
     int setupPipeline();
@@ -73,6 +74,7 @@ private:
     std::vector<GstElement *> mElements;
     GstElement* mPipeline;
     GstElement* mDepay;
+    std::string mErrorMsg;
 };
 
 #endif//_MEDIASTREAM_H_20210909_

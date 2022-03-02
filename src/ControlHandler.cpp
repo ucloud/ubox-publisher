@@ -71,6 +71,17 @@ int ControlHandler::SetBitrate(const char* deviceName, int bitrate) {
     return 0;
 }
 
+int ControlHandler::GetStatus(std::string &msg) {
+    if (!streamOpened) {
+        msg = "not open";
+        return -1;
+    }
+    if (stream != NULL) {
+        return stream->GetStatus(msg);
+    }
+    return 0;
+}
+
 int ControlHandler::GetBitrate(const char* deviceName) {
     std::unique_lock<std::mutex> lock(streamMutex);
     if (!streamOpened) {

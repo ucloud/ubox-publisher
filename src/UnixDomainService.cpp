@@ -23,6 +23,7 @@ UnixDomainService::UnixDomainService(ControlHandler &handler)
   funcMap["GetBitrate"] = &UnixDomainService::GetBitrate_Parse;
   funcMap["PushStream"] = &UnixDomainService::PushStream_Parse;
   funcMap["CloseStream"] = &UnixDomainService::CloseStream_Parse;
+  funcMap["GetStatus"] = &UnixDomainService::GetStatus_Parse;
 }
 
 UnixDomainService::~UnixDomainService() {
@@ -298,6 +299,18 @@ cJSON *UnixDomainService::CloseStream_Parse(cJSON *jsonRequest) {
   if (ret != 0) {
     tlog(TLOG_INFO, "stop stream failed, device(%s)", jsonDevice->valuestring);
     return GetJsonByCode(RETCODE_TYPE_UNKNOWN_ERROR, "unknown error");
+  }
+  return GetJsonByCode(RETCODE_TYPE_SUCCESS, "success");
+}
+
+cJSON *UnixDomainService::GetStatus_Parse(cJSON *jsonRequest) {
+  tlog(TLOG_INFO, "%s, get status:\"%s\"", __FUNCTION__,
+       cJSON_Print(jsonRequest));
+
+  std::string msg;
+  int ret = handler.GetStatus(msg);
+  if (ret != 0) {
+    return GetJsonByCode(RETCODE_TYPE_UNKNOWN_ERROR, msg.c_str());
   }
   return GetJsonByCode(RETCODE_TYPE_SUCCESS, "success");
 }
