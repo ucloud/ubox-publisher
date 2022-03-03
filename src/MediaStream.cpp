@@ -235,8 +235,8 @@ void MediaStream::addFilterFramerate() {
   mElements.push_back(e);
 }
 
-void MediaStream::addVideoConvert() {
-  GstElement *e = gst_element_factory_make("videoconvert", "videoconvert");
+void MediaStream::addVideoConvert(const std::string &name) {
+  GstElement *e = gst_element_factory_make("videoconvert", name.c_str());
   mElements.push_back(e);
 }
 
@@ -396,7 +396,7 @@ int MediaStream::setupPipeline() {
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
     if (mInputType == inputWrhCamera)
-      addVideoConvert();
+      addVideoConvert("videoconvert-wrh");
 
     if (mAddClock)
       addClock();
@@ -415,7 +415,7 @@ int MediaStream::setupPipeline() {
       addFilterScale();
   }
 
-  addVideoConvert();
+  addVideoConvert("videoconvert");
   addFilterVideoConvert();
 
   addEncoder();

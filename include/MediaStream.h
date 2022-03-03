@@ -33,7 +33,7 @@ private:
     void addFilterFramerate();
     void addDepay();
     void addDecoder();
-    void addVideoConvert();
+    void addVideoConvert(const std::string &name);
     void addFilterVideoConvert();
     void addNVConv();
     void addScale();
