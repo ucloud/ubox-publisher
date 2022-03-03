@@ -196,7 +196,7 @@ void MediaStream::addSource() {
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
-                 "height", mSrcHeight, "fps", mInputFPS, NULL);
+                 "height", mSrcHeight, "fps", 20, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
@@ -289,7 +289,7 @@ void MediaStream::addScale() {
   GstElement *e;
   if (mAccel == accelJetson) // reuse nvvidconv
     return;
-  else if (mAccel == accelIntel) {
+  else if (mAccel == accelIntel && mInputType != inputWrhCamera) {
     e = gst_element_factory_make("vaapipostproc", "scale");
     g_object_set(e, "width", mDstWidth, "height", mDstHeight, "scale-method",
                  2 /*high quality*/, NULL);
@@ -411,7 +411,7 @@ int MediaStream::setupPipeline() {
   // scale
   if (mSrcWidth != mDstWidth && mSrcHeight != mDstHeight) {
     addScale();
-    if (mAccel != accelIntel)
+    if (mAccel != accelIntel && mInputType != inputWrhCamera)
       addFilterScale();
   }
 
@@ -554,6 +554,9 @@ void MediaStream::run() {
         tlog(TLOG_INFO, "Pipeline state changed from %s to %s:",
              gst_element_state_get_name(old_state),
              gst_element_state_get_name(new_state));
+        if (new_state == GST_STATE_PAUSED || new_state == GST_STATE_NULL) {
+            mRestart = true;
+        }
       }
       break;
     default:
