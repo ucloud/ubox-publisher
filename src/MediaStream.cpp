@@ -108,7 +108,7 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
 
   mOpened = true;
   if (clockEnable)
-      mAddClock = true;
+    mAddClock = true;
   if (strlen(inputType) > 0)
     mInputType = inputType;
 
@@ -238,11 +238,13 @@ void MediaStream::addFilterFramerate() {
 void MediaStream::addVideoConvert() {
   GstElement *e = gst_element_factory_make("videoconvert", "videoconvert");
   mElements.push_back(e);
+}
 
+void MediaStream::addFilterVideoConvert() {
   if (mAccel == accelNone && mEncode == codeH265) {
     GstCaps *caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING,
                                         "I420", NULL);
-    e = gst_element_factory_make("capsfilter", "filter_convert");
+    GstElement *e = gst_element_factory_make("capsfilter", "filter_convert");
     g_object_set(e, "caps", caps, NULL);
     gst_caps_unref(caps);
     mElements.push_back(e);
@@ -393,6 +395,9 @@ int MediaStream::setupPipeline() {
     addDepay();
     addDecoder();
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
+    if (mInputType == inputWrhCamera)
+      addVideoConvert();
+
     if (mAddClock)
       addClock();
     if (mFps > 0 && mFps != mInputFPS) {
@@ -411,6 +416,7 @@ int MediaStream::setupPipeline() {
   }
 
   addVideoConvert();
+  addFilterVideoConvert();
 
   addEncoder();
   if (mEncode == codeH264 && mAccel == accelIntel)

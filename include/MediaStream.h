@@ -34,6 +34,7 @@ private:
     void addDepay();
     void addDecoder();
     void addVideoConvert();
+    void addFilterVideoConvert();
     void addNVConv();
     void addScale();
     void addFilterScale();
