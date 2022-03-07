@@ -123,10 +123,10 @@ int MediaStream::Open(const char *inputType, const char *deviceName,
     mDecode = decode;
   mDstWidth = dstWidth;
   mDstHeight = dstHeight;
-  mFps = fps;
   mInputFPS = inputfps;
   if (mInputFPS == 0)
-    mInputFPS = 60;
+    mInputFPS = fps;
+  mFps = fps;
   mBitrate = bitrate;
   mUrl = url;
 
@@ -196,7 +196,7 @@ void MediaStream::addSource() {
   } else if (mInputType == inputWrhCamera) {
     e = gst_element_factory_make("wrhcamerasrc", "src");
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
-                 "height", mSrcHeight, "fps", 20, NULL);
+                 "height", mSrcHeight, "fps", mInputFPS, NULL);
   } else {
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
@@ -287,33 +287,33 @@ void MediaStream::addNVConv() {
 
 void MediaStream::addScale() {
   GstElement *e;
-  if (mAccel == accelJetson) // reuse nvvidconv
-    return;
-  else if (mAccel == accelIntel && mInputType != inputWrhCamera) {
-    e = gst_element_factory_make("vaapipostproc", "scale");
-    g_object_set(e, "width", mDstWidth, "height", mDstHeight, "scale-method",
-                 2 /*high quality*/, NULL);
-  } else
-    e = gst_element_factory_make("videoscale", "scale");
-  mElements.push_back(e);
-}
-
-void MediaStream::addFilterScale() {
-  GstElement *e = gst_element_factory_make("capsfilter", "filter_scale");
   GstCaps *caps;
-  if (mAccel == accelJetson) {
+
+  if (mAccel == accelJetson) { // reuse nvvidconv
     caps = gst_caps_new_simple("video/x-raw", "width", G_TYPE_INT, mDstWidth,
                                "height", G_TYPE_INT, mDstHeight, NULL);
     GstCapsFeatures *const memory_features{
         gst_caps_features_new("memory:NVMM", nullptr)};
     gst_caps_set_features(caps, 0, memory_features);
+    GstElement *f = gst_element_factory_make("capsfilter", "filter_scale");
+    g_object_set(f, "caps", caps, NULL);
+    mElements.push_back(f);
+  } else if (mAccel == accelIntel) {
+    e = gst_element_factory_make("vaapipostproc", "scale");
+    g_object_set(e, "width", mDstWidth, "height", mDstHeight, "scale-method",
+                 2 /*high quality*/, NULL);
+    mElements.push_back(e);
   } else {
+    e = gst_element_factory_make("videoscale", "scale");
+    mElements.push_back(e);
+
     caps = gst_caps_new_simple("video/x-raw", "width", G_TYPE_INT, mDstWidth,
                                "height", G_TYPE_INT, mDstHeight, NULL);
+    GstElement *f = gst_element_factory_make("capsfilter", "filter_scale");
+    g_object_set(f, "caps", caps, NULL);
+    gst_caps_unref(caps);
+    mElements.push_back(f);
   }
-  g_object_set(e, "caps", caps, NULL);
-  gst_caps_unref(caps);
-  mElements.push_back(e);
 }
 
 void MediaStream::addEncoder() {
@@ -411,8 +411,6 @@ int MediaStream::setupPipeline() {
   // scale
   if (mSrcWidth != mDstWidth && mSrcHeight != mDstHeight) {
     addScale();
-    if (mAccel != accelIntel && mInputType != inputWrhCamera)
-      addFilterScale();
   }
 
   addVideoConvert("videoconvert");
@@ -467,6 +465,7 @@ int MediaStream::setupPipeline() {
       gst_message_unref(err_msg);
     }
     gst_object_unref(bus);
+    gst_element_set_state(mPipeline, GST_STATE_NULL);
     gst_object_unref(mPipeline);
     return 1;
   }
@@ -554,8 +553,17 @@ void MediaStream::run() {
         tlog(TLOG_INFO, "Pipeline state changed from %s to %s:",
              gst_element_state_get_name(old_state),
              gst_element_state_get_name(new_state));
-        if (new_state == GST_STATE_PAUSED || new_state == GST_STATE_NULL) {
-            mRestart = true;
+        if (old_state == GST_STATE_PLAYING &&
+            (new_state == GST_STATE_PAUSED || new_state == GST_STATE_NULL)) {
+          GstMessage *err_msg;
+          GstBus *bus = gst_element_get_bus(mPipeline);
+          if ((err_msg = gst_bus_poll(bus, GST_MESSAGE_ERROR, 0))) {
+            tlog(TLOG_ERROR, "play failed");
+            handleErrorMessage(err_msg);
+            gst_message_unref(err_msg);
+          }
+          gst_object_unref(bus);
+          mRestart = true;
         }
       }
       break;

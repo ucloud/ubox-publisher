@@ -10,6 +10,7 @@ PUBLISHER_CMD=$BUILDDIR/bin/ubox-publisher
 CLI_CMD=$BUILDDIR/test/cli
 FFMPEG_CMD=${FFMPEG_CMD:-ffmpeg}
 pid=
+keep_run=0
 
 function log() {
     echo "`date +%Y.%m.%d-%H:%M:%S.%N` [$$] $*"
@@ -40,7 +41,7 @@ check_result() {
     timeout 15 $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl 2>&1 | tee .ffmpeg.log | grep -iq "Video: $s"
     if [[ $? -eq 0 ]]; then
         log "test pass, cpu $(pidstat -p $pid 1 2 | grep -i ave | awk '{print $8}')%"
-        $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl -frames:v 1 $s-$(date +%H_%M_%S).jpeg
+        $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl -y -frames:v 1 $s-$(date +%H_%M_%S).jpeg
     else
         log "test fail"
         stop_publisher
@@ -95,7 +96,7 @@ test_platform() {
 
 usage() {
     echo "usage:$0 [j1900|jetson|all]"
-    echo "usage:$0 device decoder encoder rtmp_url accel check_string"
+    echo "usage:$0 [-k] device decoder encoder rtmp_url accel check_string"
 }
 
 if [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]]; then
@@ -111,7 +112,11 @@ fi
 start_publisher
 sleep 2
 
-if [[ $# -eq 6 ]]; then
+if [[ $# -ge 6 ]]; then
+    if [[ $1 == "-k" ]]; then
+        keep_run=1
+        shift
+    fi
     do_test $1 $2 $3 $4 $5 $6
 elif [[ $# -eq 1 ]]; then
     platform=$1
