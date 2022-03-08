@@ -343,7 +343,7 @@ void MediaStream::addEncoder() {
     if (mEncode == codeH265) {
       e = gst_element_factory_make("x265enc", "encoder");
       g_object_set(e, "tune", 4 /*zerolatency*/, "speed-preset",
-                   1 /*ultrafast*/, NULL);
+                   1 /*ultrafast*/, "option-string", "keyint=10", NULL);
     } else {
       e = gst_element_factory_make("x264enc", "encoder");
       g_object_set(e, "key-int-max", 10, "tune", 4 /*zerolatency*/,
