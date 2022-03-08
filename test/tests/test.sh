@@ -41,7 +41,7 @@ check_result() {
     timeout 15 $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl 2>&1 | tee .ffmpeg.log | grep -iq "Video: $s"
     if [[ $? -eq 0 ]]; then
         log "test pass, cpu $(pidstat -p $pid 1 2 | grep -i ave | awk '{print $8}')%"
-        $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl -y -frames:v 1 $s-$(date +%H_%M_%S).jpeg
+        $FFMPEG_CMD -nostdin -hide_banner -i $rtmpurl -y -frames:v 12 $s-$(date +%H_%M_%S)-%d.jpeg
     else
         log "test fail"
         stop_publisher
@@ -125,4 +125,4 @@ else
     usage
 fi
 
-stop_publisher
+[[ $keep_run -eq 0 ]] && stop_publisher

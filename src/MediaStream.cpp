@@ -324,18 +324,18 @@ void MediaStream::addEncoder() {
     } else {
       e = gst_element_factory_make("vaapih264enc", "encoder");
     }
-    g_object_set(e, "quality-level", 3, "cpb-length", 800, "rate-control",
+    g_object_set(e, "quality-level", 2, "tune", 1, "cpb-length", 800, "rate-control",
                  2 /*cbr*/, "keyframe-period", 10, NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
     if (mEncode == codeH265) {
       e = gst_element_factory_make("nvv4l2h265enc", "encoder");
-      g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/,
+      g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/, "preset-level", 0,
                    "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
                    "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
     } else {
       e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-      g_object_set(e, "vbv-size", 1000000, "profile", 4 /*High*/,
+      g_object_set(e, "vbv-size", 1000000, "profile", 4 /*High*/, "preset-level", 0,
                    "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
                    "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
     }
@@ -394,6 +394,10 @@ int MediaStream::setupPipeline() {
   if (mInputType == inputRTSP) {
     addDepay();
     addDecoder();
+    if (mFps > 0) {
+      addVideoRate();
+      addFilterFramerate();
+    }
   } else if (mInputType == inputV4L2 || mInputType == inputWrhCamera) {
     if (mInputType == inputWrhCamera)
       addVideoConvert("videoconvert-wrh");
