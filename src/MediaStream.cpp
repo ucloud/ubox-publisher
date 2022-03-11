@@ -321,34 +321,40 @@ void MediaStream::addEncoder() {
   if (mAccel == accelIntel) {
     if (mEncode == codeH265) {
       e = gst_element_factory_make("vaapih265enc", "encoder");
+      g_object_set(e, "tune", 1 /*high compression*/, "quality-level", 2,
+                   "cpb-length", 800, "rate-control", 2 /*cbr*/, NULL);
     } else {
       e = gst_element_factory_make("vaapih264enc", "encoder");
     }
-    g_object_set(e, "quality-level", 2, "tune", 1, "cpb-length", 800, "rate-control",
-                 2 /*cbr*/, "keyframe-period", 10, NULL);
+    g_object_set(e, "tune", 1 /*high compression*/, "quality-level", 2,
+                 "cpb-length", 800, "rate-control", 2 /*cbr*/, "cabac", TRUE,
+                 NULL);
     setBitrate(e, mBitrate);
   } else if (mAccel == accelJetson) {
     if (mEncode == codeH265) {
       e = gst_element_factory_make("nvv4l2h265enc", "encoder");
-      g_object_set(e, "vbv-size", 1000000, "profile", 0 /*Main*/, "preset-level", 0,
-                   "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
-                   "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
+      g_object_set(e, "profile", 0 /*Main*/, "preset-level", 3 /*normal*/,
+                   "maxperf-enable", TRUE, "vbv-size", 1000000, "control-rate",
+                   1 /*constant_bitrate*/, "bitrate", mBitrate * 1000,
+                   "peak-bitrate", mBitrate * 1000, "num-B-Frames", 0, NULL);
     } else {
       e = gst_element_factory_make("nvv4l2h264enc", "encoder");
-      g_object_set(e, "vbv-size", 1000000, "profile", 4 /*High*/, "preset-level", 0,
-                   "iframeinterval", 10, "control-rate", 1 /*constant_bitrate*/,
-                   "maxperf-enable", 1, "bitrate", mBitrate * 1000, NULL);
+      g_object_set(e, "profile", 4 /*High*/, "preset-level", 3 /*normal*/,
+                   "maxperf-enable", TRUE, "vbv-size", 1000000, "control-rate",
+                   1 /*constant_bitrate*/, "bitrate", mBitrate * 1000,
+                   "peak-bitrate", mBitrate * 1000, "num-B-Frames", 0,
+                   "cabac-entropy-coding", TRUE, NULL);
     }
   } else {
     if (mEncode == codeH265) {
       e = gst_element_factory_make("x265enc", "encoder");
-      g_object_set(e, "tune", 4 /*zerolatency*/, "speed-preset",
-                   1 /*ultrafast*/, "option-string", "keyint=10", NULL);
+      g_object_set(e, "speed-preset", 1 /*ultrafast*/, "tune",
+                   4 /*zerolatency*/, "option-string", "keyint=10", NULL);
     } else {
       e = gst_element_factory_make("x264enc", "encoder");
-      g_object_set(e, "key-int-max", 10, "tune", 4 /*zerolatency*/,
-                   "speed-preset", 1 /*ultrafast*/, "vbv-buf-capacity", 300,
-                   NULL);
+      g_object_set(e, "speed-preset", 1 /*ultrafast*/, "tune",
+                   4 /*zerolatency*/, "key-int-max", 10, "vbv-buf-capacity",
+                   600, NULL);
     }
     setBitrate(e, mBitrate);
   }
