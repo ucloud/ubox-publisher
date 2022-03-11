@@ -4,7 +4,7 @@ rtmp stream publisher
 
 1. hardware acceleration, support Intel HD graphics/Jetson
 2. RTSP/v4l2/custom FPGA pull, rtmp push
-3. much higher performance v4l2 element
+3. much higher performance v4l2 element, support YUYV and MJPEG
 4. hevc in rtmp
 
 ### Performance

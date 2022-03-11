@@ -1,7 +1,12 @@
 #include "MediaStream.h"
 #include "tinylog/tlog.h"
+#include <fcntl.h>
 #include <fstream>
+#include <linux/videodev2.h>
 #include <sstream>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifndef BACK_PNG_FILE
 #define BACK_PNG_FILE "/usr/share/ubox-publisher/back.png"
@@ -10,6 +15,9 @@
 const char *inputWrhCamera = "wrh-fpga";
 const char *inputRTSP = "rtsp";
 const char *inputV4L2 = "v4l2";
+
+const char *v4l2FmtYUYV = "YUYV";
+const char *v4l2FmtMJPG = "MJPG";
 
 const char *accelNone = "none";
 const char *accelJetson = "jetson";
@@ -35,6 +43,7 @@ MediaStream::MediaStream() {
   mAccel = accelNone;
   mEncode = codeH264;
   mDecode = codeH264;
+  mV4l2Fmt = v4l2FmtYUYV;
 }
 
 MediaStream::~MediaStream() {}
@@ -187,7 +196,7 @@ void MediaStream::setBitrate(GstElement *encoder, int bitrate) {
   g_object_set(encoder, "bitrate", bitrate, NULL);
 }
 
-void MediaStream::addSource() {
+int MediaStream::addSource() {
   GstElement *e;
   if (mInputType == inputRTSP) {
     e = gst_element_factory_make("rtspsrc", "src");
@@ -198,13 +207,42 @@ void MediaStream::addSource() {
     g_object_set(e, "index", atoi(mDeviceName.c_str()), "width", mSrcWidth,
                  "height", mSrcHeight, "fps", mInputFPS, NULL);
   } else {
+    // v4l2
+    struct v4l2_format fmt;
+    memset(&fmt, 0, sizeof fmt);
+
+    int v4lfd = open(mDeviceName.c_str(), O_RDONLY);
+    if (v4lfd < 0) {
+      tlog(TLOG_ERROR, "open %s failed, err=%s(%d)", mDeviceName.c_str(),
+           strerror(errno), errno);
+      return -1;
+    }
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    int ret = ioctl(v4lfd, VIDIOC_G_FMT, &fmt);
+    if (ret < 0) {
+      tlog(TLOG_ERROR, "ioctl VIDIOC_G_FMT failed, err=%s(%d)", strerror(errno),
+           errno);
+      return -2;
+    }
+
+    if (fmt.fmt.pix.pixelformat == v4l2_fourcc('M', 'J', 'P', 'G')) {
+      mV4l2Fmt = v4l2FmtMJPG;
+    }
+
     e = gst_element_factory_make("uv4l2src", "src");
     g_object_set(e, "device", mDeviceName.c_str(), "width", mSrcWidth, "height",
-                 mSrcHeight, "fps", mInputFPS, NULL);
+                 mSrcHeight, "fps", mInputFPS, "format", mV4l2Fmt.c_str(), NULL);
     // if (getAccel() != "jetson") { // buggy jetson camera
     //   g_object_set(e, "change", 1, NULL);
     // }
   }
+  mElements.push_back(e);
+  return 0;
+}
+
+void MediaStream::addJpegDec() {
+  GstElement *e =
+      gst_element_factory_make("jpegdec", "jpegdec");
   mElements.push_back(e);
 }
 
@@ -396,7 +434,13 @@ void MediaStream::addRTMPSink() {
 
 int MediaStream::setupPipeline() {
   mPipeline = gst_pipeline_new("publisher");
-  addSource();
+  if (addSource() < 0) {
+    tlog(TLOG_ERROR, "add element src failed");
+    return -1;
+  }
+  if (mInputType == inputV4L2 && mV4l2Fmt == v4l2FmtMJPG) {
+      addJpegDec();
+  }
   if (mInputType == inputRTSP) {
     addDepay();
     addDecoder();
@@ -419,7 +463,7 @@ int MediaStream::setupPipeline() {
   if (mAccel == accelJetson)
     addNVConv();
   // scale
-  if (mSrcWidth != mDstWidth && mSrcHeight != mDstHeight) {
+  if (mSrcWidth > mDstWidth && mSrcHeight > mDstHeight) {
     addScale();
   }
 

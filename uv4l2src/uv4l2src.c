@@ -527,18 +527,25 @@ gst_uv4l2src_get_caps (GstBaseSrc * bsrc, GstCaps * filter)
 
     char a = src->format[0], b = src->format[1], c = src->format[2], d = src->format[3];
     guint32 pixelformat = v4l2_fourcc(a, b, c, d);
-    GstVideoFormat fmt = gst_v4l2_object_v4l2fourcc_to_video_format(pixelformat);
-    if (fmt == GST_VIDEO_FORMAT_UNKNOWN) {
-        GST_ELEMENT_ERROR(src, RESOURCE, FAILED,
-                ("convert failed, unknown gst video format. v4l2 format %s", src->format), NULL);
-        return NULL;
-    }
-    caps = gst_caps_new_simple ("video/x-raw",
-            "format", G_TYPE_STRING, gst_video_format_to_string(fmt),
-            "width", G_TYPE_INT, src->width,
-            "height", G_TYPE_INT, src->height,
-            "framerate", GST_TYPE_FRACTION, src->rate_numerator, src->rate_denominator, NULL);
+    if (pixelformat == V4L2_PIX_FMT_MJPEG) {
+        caps = gst_caps_new_simple ("image/jpeg",
+                "width", G_TYPE_INT, src->width,
+                "height", G_TYPE_INT, src->height,
+                "framerate", GST_TYPE_FRACTION, src->rate_numerator, src->rate_denominator, NULL);
+    } else {
+        GstVideoFormat fmt = gst_v4l2_object_v4l2fourcc_to_video_format(pixelformat);
+        if (fmt == GST_VIDEO_FORMAT_UNKNOWN) {
+            GST_ELEMENT_ERROR(src, RESOURCE, FAILED,
+                    ("convert failed, unknown gst video format. v4l2 format %s", src->format), NULL);
+            return NULL;
+        }
+        caps = gst_caps_new_simple ("video/x-raw",
+                "format", G_TYPE_STRING, gst_video_format_to_string(fmt),
+                "width", G_TYPE_INT, src->width,
+                "height", G_TYPE_INT, src->height,
+                "framerate", GST_TYPE_FRACTION, src->rate_numerator, src->rate_denominator, NULL);
 
+    }
     return caps;
 }
 
@@ -579,7 +586,7 @@ init_v4l2_buffer(GstUV4l2Src *src) {
             GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("ioctl VIDIOC_QUERYBUF failed"), NULL);
             return FALSE;
         }
-       g_print("uv4l2src: frame size %d\n", buf.length);
+        g_print("uv4l2src: frame size %d\n", buf.length);
         src->frame_size = buf.length;
 
         src->queue_buf[i].length = buf.length;

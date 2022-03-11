@@ -27,7 +27,8 @@ private:
     void setBitrate(GstElement *encoder, int bitrate);
     static void onRtspPadAdded(GstElement *src, GstPad *src_pad, gpointer user_data);
     int setupPipeline();
-    void addSource();
+    int addSource();
+    void addJpegDec();
     void addClock();
     void addVideoRate();
     void addFilterFramerate();
@@ -76,6 +77,7 @@ private:
     GstElement* mPipeline;
     GstElement* mDepay;
     std::string mErrorMsg;
+    std::string mV4l2Fmt;
 };
 
 #endif//_MEDIASTREAM_H_20210909_
