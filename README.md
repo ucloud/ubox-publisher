@@ -1,8 +1,8 @@
-rtmp stream publisher
+RTMP stream publisher
 =================
 ### Feature
 
-1. hardware acceleration, support Intel HD graphics/Jetson
+1. Hardware acceleration, support Intel HD graphics/Nvidia Jetson series
 2. RTSP/v4l2/custom FPGA pull, rtmp push
 3. much higher performance v4l2 element, support YUYV and MJPEG
 4. hevc in rtmp
@@ -18,7 +18,7 @@ rtmp stream publisher
 
 process: add timestamp -> change video resolution -> video encode
 
-Jetson Xavier NX, add timestamp uses about 3ms, video resolution change uses about 5ms and video encode uses about 3ms.
+Jetson Xavier NX, add timestamp uses about **3ms**, video resolution change uses about **5ms** and video encode uses about **3ms**.
 
 ### Install
 
@@ -28,10 +28,10 @@ setup epel repo and rpmfusion repo using [add_rpmfusion_cn_mirror.sh](util/add_r
 
 ```bash
 wget -O /etc/yum.repos.d/ubox.repo https://ubox-repo.ucloud.cn/repos/rpm/rhel8/ubox.repo
-yum install ubox-publisher
+dnf install ubox-publisher
 ```
 
-* Ubuntu 18.04/20.04
+* Ubuntu 18.04 Bionic and Ubuntu 20.04 Focal
 
 ```bash
 apt-key adv --fetch-keys http://ubox-deb.ucloud.cn/DEB-GPG-KEY-ubox
@@ -57,7 +57,7 @@ ubox-publisher -u @/tmp/publisher.sock
 
 ### Self compiling
 
-1. dependency install
+1. Dependency: RPMFusion and EPEL repositoires
 
 * CentOS 8
 
@@ -70,7 +70,7 @@ dnf install glib2 pango-devel cairo-devel gstreamer1-devel gstreamer1-plugins-ba
     libva-intel-driver gstreamer1-plugins-bad-freeworld
 ```
 
-* Ubuntu 18.04
+* Ubuntu 18.04/20.04
 
 ```bash
 apt-get install libpango1.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
@@ -82,5 +82,8 @@ apt-get install libpango1.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0
 2. compile
 
 ```bash
-mkdir build && cd build && cmake .. && make install
+mkdir build
+cd build
+cmake ..
+make install
 ```
